@@ -10,13 +10,14 @@ editor: visual
 ## Load libraries
 
 ```{r}
-library(tidyverse)
-library(fs)
+library("tidyverse")
+library("fs")
+library("here")
 ```
 
 ```{r}
 # Create _raw data folder directory
-raw_folder <- dir_create("_raw")
+raw_folder <- dir_create(here("_raw"))
 
 # List the urls needed for downloading the data
 urls <- c(
@@ -56,7 +57,7 @@ walk2(urls, raw_filenames, download.file, mode = "wb")
 
 ```{r}
 # Create data data folder directory
-data_folder <- dir_create("data")
+data_folder <- dir_create(here("data"))
 
 # Filter readme files from _raw before copying to data folder
 raw_filenames <- raw_filenames |>
