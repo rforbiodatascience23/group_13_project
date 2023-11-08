@@ -1,0 +1,62 @@
+---
+title: "01 - Loading data"
+subtitle: "R for Bio Data Science"
+format: html
+author: Mikkel Niklas Rasmussen (s193518)
+date: "2023-11-08"
+editor: visual
+---
+
+## Load libraries
+
+```{r}
+library(tidyverse)
+library(fs)
+```
+
+```{r}
+# Create _raw data folder directory
+raw_folder <- dir_create("_raw")
+
+# List the urls needed for downloading the data
+urls <- c(
+  "https://datadryad.org/stash/downloads/file_stream/96050",
+  "https://datadryad.org/stash/downloads/file_stream/96056",
+  "https://datadryad.org/stash/downloads/file_stream/96052",
+  "https://datadryad.org/stash/downloads/file_stream/96054",
+  "https://datadryad.org/stash/downloads/file_stream/96051",
+  "https://datadryad.org/stash/downloads/file_stream/96057",
+  "https://datadryad.org/stash/downloads/file_stream/96053",
+  "https://datadryad.org/stash/downloads/file_stream/96055",
+  "https://datadryad.org/stash/downloads/file_stream/96059",
+  "https://datadryad.org/stash/downloads/file_stream/96058"
+)
+
+
+# Create list of file names and add raw folder to filenames
+filenames <- c(
+  "gene_counts.txt",
+  "intergenics.txt",
+  "Introns.txt",
+  "linc_KhalilGenes.txt",
+  "README_for_gene_counts.txt",
+  "README_for_intergenics.txt",
+  "README_for_Introns.txt",
+  "README_for_linc_KhalilGenes.txt",
+  "README_for_recurrence.txt",
+  "recurrence.txt"
+)
+filenames <- str_c(raw_folder, "/", filenames)
+
+# Downloads the files using purrr
+walk2(urls, filenames, download.file, mode = "wb")
+```
+
+## Write to data folder
+
+```{r}
+# Create data data folder directory
+data_folder <- dir_create("data")
+
+
+```
