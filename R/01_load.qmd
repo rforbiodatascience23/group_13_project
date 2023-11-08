@@ -57,6 +57,12 @@ walk2(urls, raw_filenames, download.file, mode = "wb")
 ```{r}
 # Create data data folder directory
 data_folder <- dir_create("data")
+
+# Filter readme files from _raw before copying to data folder
+raw_filenames <- raw_filenames |>
+  str_subset("README", negate = TRUE)
+filenames <- filenames |>
+  str_subset("README", negate = TRUE)
 data_filenames <- str_c(data_folder, "/", filenames)
 
 # Copy files into data folder
