@@ -46,17 +46,19 @@ filenames <- c(
   "README_for_recurrence.txt",
   "recurrence.txt"
 )
-filenames <- str_c(raw_folder, "/", filenames)
+raw_filenames <- str_c(raw_folder, "/", filenames)
 
 # Downloads the files using purrr
-walk2(urls, filenames, download.file, mode = "wb")
+walk2(urls, raw_filenames, download.file, mode = "wb")
 ```
 
-## Write to data folder
+## Write files to data folder
 
 ```{r}
 # Create data data folder directory
 data_folder <- dir_create("data")
+data_filenames <- str_c(data_folder, "/", filenames)
 
-
+# Copy files into data folder
+file_copy(raw_filenames, data_filenames)
 ```
