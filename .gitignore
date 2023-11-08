@@ -51,3 +51,6 @@ rsconnect/
 # Data folders
 _raw/
 data/
+
+# VS code stuff
+.vdoc.r
