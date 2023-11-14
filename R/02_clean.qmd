@@ -1,9 +1,9 @@
 ---
-title: "01 - Loading data"
+title: "02 - Cleaning data"
 subtitle: "R for Bio Data Science"
 format: html
 author: Mikkel Niklas Rasmussen (s193518)
-date: "2023-11-08"
+date: "2023-11-14"
 editor: visual
 ---
 
@@ -12,20 +12,73 @@ editor: visual
 ```{r}
 library("tidyverse")
 library("here")
-library("fs")
 library("readxl")
+source(here("R/99_proj_func.R"))
 ```
 
-### Transpose expression data
-
-### Inner join expression with Metadata
-
-### Clean weird variables
+## Load data
+```{r}
+# Load data
+data <- read_tsv(here("data/01_dat_load.tsv"))
+```
 
 ### Rename columns
+We will start by cleaning the column names, as there does not seem to be any sort of pattern in the naming scheme. We will use the `janitor::clean_names()` function for this task, which is used inside of the custom `clean_selected_names
 
-# Check
+```{r}
+# Cleaning column names
+data <- data |> clean_selected_cols(1:29)
+```
 
-NAs in dataset
+## Check of NAs in the dataset
+We need to 
+```{r}
+data |>
+  summarise(
+    across(everything(), ~ sum(is.na(.)))
+  ) |>
+  pivot_longer(everything()) |>
+  filter(value > 0) |>
+  arrange(desc(value))
+```
 
-Duplicates of ID
+We see that there are quite a few NAs in the meta data table. Specially, the age is missing for one of the samples. However, we might not need to use all of the these columns for analysis and visualizations, so we will leave them here for now. 
+
+## Check whether there are duplictes of the sample ID
+
+```{r}
+# Check for duplicated sample IDs
+data |>
+  group_by(sample_id) |>
+  filter(n() > 1)
+# There are no duplicates
+```
+
+
+## Clean weird variables
+
+```{r}
+# Define columns containing paratheses in the value cells
+cols_to_clean <- c(
+  "snp_array_6_0_affymetrix",
+  "rna_seq",
+  "whole_genome_sequencing",
+  "whole_exome_sequencing",
+  "smoking_status"
+)
+
+# Remove references in parentheses in the these columns
+data <- data |>
+  mutate_at(
+    cols_to_clean,
+    str_remove,
+    pattern = "\\s*\\(.*\\)"
+  )
+```
+
+## Save cleaned data
+
+```{r}
+# Save as .tsv file
+write_tsv(data, "data/02_dat_clean.tsv")
+```
