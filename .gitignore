@@ -54,3 +54,6 @@ data/
 
 # VS code stuff
 .vdoc.r
+
+# Igonre Mac stuff
+.DS_store
