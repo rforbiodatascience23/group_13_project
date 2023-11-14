@@ -12,6 +12,7 @@ editor: visual
 ```{r}
 library("tidyverse")
 library("here")
+library("fs")
 library("readxl")
 ```
 
@@ -27,9 +28,10 @@ meta_data <- read_excel(
 
 # Load RNA-seq expression data from sheet 10
 expr_data <- read_excel(
-  here("data/_raw/41586_2015_BFnature14664_MOESM72_ESM.xlsx"),
+  here("data/_raw/raw_data.xlsx"),
   sheet = "Suppl_Table10",
-  skip = 1
+  skip = 1,
+  na = "NA"
 )
 ```
 
