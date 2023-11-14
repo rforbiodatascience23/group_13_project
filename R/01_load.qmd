@@ -63,14 +63,14 @@ expr_data_sum_trans <- expr_data_sum |>
 
 # Let's count how many samples have RNA-seq data
 meta_data |>
-  group_by(rna_seq) |>
+  group_by(`RNA-seq`) |>
   count()
 
 # Before joining we will check which samples will not be
 # joined
 meta_data |>
-  anti_join(expr_data_sum_trans, by = join_by("sample_id")) |>
-  filter(rna_seq == "no") |>
+  anti_join(expr_data_sum_trans, by = join_by(`RNA-seq` == sample_id)) |>
+  filter(`RNA-seq` == "no") |>
   count()
 ```
 
@@ -79,7 +79,7 @@ We see that the samples that are not possible to join are for samples where the 
 ```{r}
 # Inner join the data
 all_data <- meta_data |>
-  inner_join(expr_data_sum_trans, by = join_by("sample_id"))
+  inner_join(expr_data_sum_trans, by = join_by(`RNA-seq` == sample_id))
 ```
 
 ## Save the combined data
