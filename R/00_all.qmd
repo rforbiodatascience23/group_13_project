@@ -1,0 +1,21 @@
+---
+title: "00 - Run all quarto documents of the projects"
+subtitle: "R for Bio Data Science"
+format: html
+author: Mikkel Niklas Rasmussen (s193518)
+date: "2023-11-08"
+editor: visual
+---
+
+## Load libraries
+```{r}
+library("quarto")
+library("here")
+```
+
+```{r}
+quarto_render(
+  input = here("R/01_load.qmd"),
+  output_file = "01_load.html"
+)
+```
