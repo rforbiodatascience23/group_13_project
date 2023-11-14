@@ -73,8 +73,6 @@ data <- data |>
     cols_to_clean,
     str_remove,
     pattern = "\\(.*\\)"
-  ) |>
-  select(1:29) |>
-  View()
+  )
 ```
 
