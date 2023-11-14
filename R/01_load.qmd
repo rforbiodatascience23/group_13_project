@@ -33,8 +33,57 @@ expr_data <- read_excel(
 )
 ```
 
-## Write files to data folder
+## Combine the metadata and expression sheets from the excel table
+First we will need to transpose the RNA-seq gene expression dataframe before joining it with the meta data. We 
+
 ```{r}
-write_tsv(meta_data, here("data/meta_data.tsv"))
-write_tsv(expr_data, here("data/expr_data.tsv"))
+# Check if there are duplicated genes
+expr_data |>
+  group_by(gene) |>
+  filter(n() > 1) |>
+  summarise(n = n()) |>
+  arrange(desc(n))
+````
+
+We see that there are a lot of duplicated genes. This is due to multiple transript mapping to the the same gene. Here we will sum over the rows where multiple transcripts map to the same gene
+
+```{r}
+# Sum the FPKM values across multiple transcrips mapping
+# to the same gene
+expr_data_sum <- expr_data |>
+  select(-refseq) |>
+  group_by(gene) |>
+  summarise(across(where(is.numeric), sum))
+
+# We then need to transpose the expression dataframe
+# so that is can be joined with the metadata
+expr_data_sum_trans <- expr_data_sum |>
+  pivot_longer(-gene, names_to = "sample_id") |>
+  pivot_wider(names_from = gene, values_from = value)
+
+# Let's count how many samples have RNA-seq data
+meta_data |>
+  group_by(rna_seq) |>
+  count()
+
+# Before joining we will check which samples will not be
+# joined
+meta_data |>
+  anti_join(expr_data_sum_trans, by = join_by("sample_id")) |>
+  filter(rna_seq == "no") |>
+  count()
+```
+
+We see that the samples that are not possible to join are for samples where the meta data also states that the is no RNA-seq data for the sample. Hence, it makes sense that it is not possible to join these.
+
+```{r}
+# Inner join the data
+all_data <- meta_data |>
+  inner_join(expr_data_sum_trans, by = join_by("sample_id"))
+```
+
+## Save the combined data
+  ```{r}
+# Save in data directory, as .tsv file
+write_tsv(all_data, here("data/01_dat_load.tsv"))
 ```
