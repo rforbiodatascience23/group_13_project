@@ -8,11 +8,9 @@ editor: visual
 ---
 
 ## Load libraries
-
 ```{r}
 library("tidyverse")
 library("here")
-library("fs")
 library("readxl")
 ```
 
@@ -36,7 +34,6 @@ expr_data <- read_excel(
 ```
 
 ## Write files to data folder
-
 ```{r}
 write_tsv(meta_data, here("data/meta_data.tsv"))
 write_tsv(expr_data, here("data/expr_data.tsv"))
