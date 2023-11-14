@@ -57,3 +57,4 @@ data/
 
 # Igonre Mac stuff
 .DS_store
+/.quarto/
