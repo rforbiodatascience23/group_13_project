@@ -1,0 +1,17 @@
+---
+title: "01 - Loading data"
+subtitle: "R for Bio Data Science"
+format: html
+author: Mikkel Niklas Rasmussen (s193518)
+date: "2023-11-08"
+editor: visual
+---
+
+## Load libraries
+
+```{r}
+library("tidyverse")
+library("here")
+library("fs")
+library("readxl")
+```
