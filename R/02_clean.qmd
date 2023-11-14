@@ -55,7 +55,7 @@ data |>
 ```
 
 
-### Clean weird variables
+## Clean weird variables
 
 ```{r}
 # Define columns containing paratheses in the value cells
@@ -72,7 +72,13 @@ data <- data |>
   mutate_at(
     cols_to_clean,
     str_remove,
-    pattern = "\\(.*\\)"
+    pattern = "\\s*\\(.*\\)"
   )
 ```
 
+## Save cleaned data
+
+```{r}
+# Save as .tsv file
+write_tsv(data, "data/02_dat_clean.tsv")
+```
