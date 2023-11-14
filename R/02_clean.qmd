@@ -15,3 +15,17 @@ library("here")
 library("fs")
 library("readxl")
 ```
+
+### Transpose expression data
+
+### Inner join expression with Metadata
+
+### Clean weird variables
+
+### Rename columns
+
+# Check
+
+NAs in dataset
+
+Duplicates of ID
