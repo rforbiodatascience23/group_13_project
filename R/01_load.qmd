@@ -11,61 +11,31 @@ editor: visual
 
 ```{r}
 library("tidyverse")
-library("fs")
 library("here")
+library("readxl")
 ```
 
+## Load data
 ```{r}
-# Create _raw data folder directory
-raw_folder <- dir_create(here("_raw"))
-
-# List the urls needed for downloading the data
-urls <- c(
-  "https://datadryad.org/stash/downloads/file_stream/96050",
-  "https://datadryad.org/stash/downloads/file_stream/96056",
-  "https://datadryad.org/stash/downloads/file_stream/96052",
-  "https://datadryad.org/stash/downloads/file_stream/96054",
-  "https://datadryad.org/stash/downloads/file_stream/96051",
-  "https://datadryad.org/stash/downloads/file_stream/96057",
-  "https://datadryad.org/stash/downloads/file_stream/96053",
-  "https://datadryad.org/stash/downloads/file_stream/96055",
-  "https://datadryad.org/stash/downloads/file_stream/96059",
-  "https://datadryad.org/stash/downloads/file_stream/96058"
+# Load metadata from sheet 1
+meta_data <- read_excel(
+  here("data/_raw/raw_data.xlsx"),
+  sheet = "Suppl_Table1",
+  skip = 3,
+  na = c("NA", "--")
 )
 
-
-# Create list of file names and add raw folder to filenames
-filenames <- c(
-  "gene_counts.txt",
-  "intergenics.txt",
-  "Introns.txt",
-  "linc_KhalilGenes.txt",
-  "README_for_gene_counts.txt",
-  "README_for_intergenics.txt",
-  "README_for_Introns.txt",
-  "README_for_linc_KhalilGenes.txt",
-  "README_for_recurrence.txt",
-  "recurrence.txt"
+# Load RNA-seq expression data from sheet 10
+expr_data <- read_excel(
+  here("data/_raw/41586_2015_BFnature14664_MOESM72_ESM.xlsx"),
+  sheet = "Suppl_Table10",
+  skip = 1
 )
-raw_filenames <- str_c(raw_folder, "/", filenames)
-
-# Downloads the files using purrr
-walk2(urls, raw_filenames, download.file, mode = "wb")
 ```
 
 ## Write files to data folder
 
 ```{r}
-# Create data data folder directory
-data_folder <- dir_create(here("data"))
-
-# Filter readme files from _raw before copying to data folder
-raw_filenames <- raw_filenames |>
-  str_subset("README", negate = TRUE)
-filenames <- filenames |>
-  str_subset("README", negate = TRUE)
-data_filenames <- str_c(data_folder, "/", filenames)
-
-# Copy files into data folder
-file_copy(raw_filenames, data_filenames)
+write_tsv(meta_data, here("data/meta_data.tsv"))
+write_tsv(expr_data, here("data/expr_data.tsv"))
 ```
