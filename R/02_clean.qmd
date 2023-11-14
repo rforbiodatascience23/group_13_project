@@ -25,15 +25,23 @@ meta_data <- read_tsv("data/meta_data.tsv")
 expr_data <- read_tsv("data/expr_data.tsv")
 ```
 
+### Rename columns
+We will start by cleaning the column names, as there does not seem to be any sort of pattern in the naming scheme. We will use the `janitor::clean_names()` function for this task.
+
+```{r}
+meta_data <- meta_data |>
+  janitor::clean_names()
+```
+
 
 ## Check of NAs in the dataset
 We need to 
 ```{r}
-meta_data |> 
+meta_data |>
   summarise(
     across(everything(), ~ sum(is.na(.)))
-  ) |> 
-  pivot_longer(everything()) |> 
+  ) |>
+  pivot_longer(everything()) |>
   filter(value > 0) |>
   arrange(desc(value))
 ```
