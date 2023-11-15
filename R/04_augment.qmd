@@ -1,0 +1,30 @@
+---
+title: "04_augment.qmd"
+subtitle: "R for Bio Data Science"
+format: html
+author: All
+date: "2023-11-15"
+editor: visual
+---
+
+## Load libraries
+
+```{r}
+library("tidyverse")
+library("here")
+library("readxl")
+library("tidyclust")
+library("tidymodels")
+source(here("R/99_proj_func.R"))
+```
+
+## Load data
+
+```{r}
+# Load data
+data <- read_tsv(here("data/02_dat_clean.tsv"))
+```
+
+## Add catagorial progresstion
+
+## Add Clusters
