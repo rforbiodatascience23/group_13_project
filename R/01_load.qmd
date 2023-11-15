@@ -8,6 +8,7 @@ editor: visual
 ---
 
 ## Load libraries
+
 ```{r}
 library("tidyverse")
 library("here")
@@ -15,6 +16,7 @@ library("readxl")
 ```
 
 ## Load data
+
 ```{r}
 # Load metadata from sheet 1
 meta_data <- read_excel(
@@ -34,7 +36,8 @@ expr_data <- read_excel(
 ```
 
 ## Combine the metadata and expression sheets from the excel table
-First we will need to transpose the RNA-seq gene expression dataframe before joining it with the meta data. We 
+
+First we will need to transpose the RNA-seq gene expression dataframe before joining it with the meta data. We
 
 ```{r}
 # Check if there are duplicated genes
@@ -43,23 +46,31 @@ expr_data |>
   filter(n() > 1) |>
   summarise(n = n()) |>
   arrange(desc(n))
-````
-
-We see that there are a lot of duplicated genes. This is due to multiple transript mapping to the the same gene. Here we will sum over the rows where multiple transcripts map to the same gene
-
+```
+We see that there are a lot of duplicated genes. This is due to multiple transcript mapping to the the same gene. Here we will sum over the rows where multiple transcripts map to the same gene
 ```{r}
 # Sum the FPKM values across multiple transcrips mapping
 # to the same gene
 expr_data_sum <- expr_data |>
   select(-refseq) |>
   group_by(gene) |>
-  summarise(across(where(is.numeric), sum))
+  summarise(across(
+                   where(is.numeric),
+                   sum
+                  )
+  )
 
 # We then need to transpose the expression dataframe
 # so that is can be joined with the metadata
 expr_data_sum_trans <- expr_data_sum |>
-  pivot_longer(-gene, names_to = "sample_id") |>
-  pivot_wider(names_from = gene, values_from = value)
+  pivot_longer(
+    -gene,
+    names_to = "sample_id"
+  ) |>
+  pivot_wider(
+    names_from = gene, 
+    values_from = value
+  )
 
 # Let's count how many samples have RNA-seq data
 meta_data |>
@@ -69,7 +80,10 @@ meta_data |>
 # Before joining we will check which samples will not be
 # joined
 meta_data |>
-  anti_join(expr_data_sum_trans, by = join_by(`Sample-ID` == sample_id)) |>
+  anti_join(
+    expr_data_sum_trans,
+    by = join_by(`Sample-ID` == sample_id)
+  ) |>
   filter(`RNA-seq` == "no") |>
   count()
 ```
@@ -79,11 +93,18 @@ We see that the samples that are not possible to join are for samples where the 
 ```{r}
 # Inner join the data
 all_data <- meta_data |>
-  inner_join(expr_data_sum_trans, by = join_by(`Sample-ID` == sample_id))
+  inner_join(
+    expr_data_sum_trans, 
+    by = join_by(`Sample-ID` == sample_id)
+  )
 ```
 
 ## Save the combined data
-  ```{r}
+
+```{r}
 # Save in data directory, as .tsv file
-write_tsv(all_data, here("data/01_dat_load.tsv"))
+write_tsv(
+  all_data, 
+  here("data/01_dat_load.tsv")
+)
 ```
