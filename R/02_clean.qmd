@@ -18,8 +18,11 @@ source(here("R/99_proj_func.R"))
 
 ## Load data
 ```{r}
-# Load data
-data <- read_tsv(here("data/01_dat_load.tsv"))
+# Load data (Comment one of the lines to choose your data)
+# Here we work with summed transcripts
+#data <- read_tsv(here("data/01_dat_load.tsv"))
+# Here we work with gene expression on the transcripts level
+data <- read_tsv(here("data/01_2_dat_load.tsv"))
 ```
 
 ### Rename columns
@@ -43,6 +46,7 @@ data |>
 ```
 
 We see that there are quite a few NAs in the meta data table. Specially, the age is missing for one of the samples. However, we might not need to use all of the these columns for analysis and visualizations, so we will leave them here for now. 
+Comment : The missing age is from a sample that is not part of the 81 samples with RNA_seq
 
 ## Check whether there are duplictes of the sample ID
 
@@ -80,5 +84,5 @@ data <- data |>
 
 ```{r}
 # Save as .tsv file
-write_tsv(data, "data/02_dat_clean.tsv")
+write_tsv(data, "data/02_2_dat_clean.tsv")
 ```
