@@ -14,8 +14,10 @@ library("tidyverse")
 library("here")
 library("readxl")
 library("tidyclust")
-library("tidymodels")
 source(here("R/99_proj_func.R"))
+
+library("tidymodels")
+
 ```
 
 ## Load data
@@ -70,7 +72,7 @@ hc_spec <- hier_clust(
 
 #sub set data for computing
 hc_data <- hc_data |>
-  select(c(1:16500))
+  select(c(1:15500))
 
 
 hc_spec_fit <- hc_spec |>
@@ -81,15 +83,20 @@ hc_spec_fit
 #hc_spec_fit$fit |> plot()
 
 
-assigned_clusteres <- extract_cluster_assignment(hc_spec_fit)
-assigned_clusteres
+assigned_clusteres <- extract_cluster_assignment(hc_spec_fit) |>
+  pluck(".cluster")
+  
+
+
+
 # add cluster asignment after last colum of meta data
 data <- data |> 
   mutate(
-    hc_cluster = assigned_clusteres,
+    hc_cluster = assigned_clusteres ,
     .after = survival)
 
-data
+data|>
+  select(c(29:34))
 
 ```
 
