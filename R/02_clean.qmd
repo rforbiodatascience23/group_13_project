@@ -17,13 +17,15 @@ source(here("R/99_proj_func.R"))
 ```
 
 ## Load data
+
 ```{r}
 # Load data
 data <- read_tsv(here("data/01_dat_load.tsv"))
 ```
 
 ### Rename columns
-We will start by cleaning the column names, as there does not seem to be any sort of pattern in the naming scheme. We will use the `janitor::clean_names()` function for this task, which is used inside of the custom `clean_selected_names
+
+We will start by cleaning the column names, as there does not seem to be any sort of pattern in the naming scheme. We will use the `janitor::clean_names()` function for this task, which is used inside of the custom \`clean_selected_names
 
 ```{r}
 # Cleaning column names
@@ -31,7 +33,9 @@ data <- data |> clean_selected_cols(1:29)
 ```
 
 ## Check of NAs in the dataset
-We need to 
+
+We need to
+
 ```{r}
 data |>
   summarise(
@@ -42,7 +46,7 @@ data |>
   arrange(desc(value))
 ```
 
-We see that there are quite a few NAs in the meta data table. Specially, the age is missing for one of the samples. However, we might not need to use all of the these columns for analysis and visualizations, so we will leave them here for now. 
+We see that there are quite a few NAs in the meta data table. Specially, the age is missing for one of the samples. However, we might not need to use all of the these columns for analysis and visualizations, so we will leave them here for now.
 
 ## Check whether there are duplictes of the sample ID
 
@@ -53,7 +57,6 @@ data |>
   filter(n() > 1)
 # There are no duplicates
 ```
-
 
 ## Clean weird variables
 
@@ -80,5 +83,8 @@ data <- data |>
 
 ```{r}
 # Save as .tsv file
-write_tsv(data, "data/02_dat_clean.tsv")
+write_tsv(
+  data, 
+  here("data/02_dat_clean.tsv")
+  )
 ```
