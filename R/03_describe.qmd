@@ -8,7 +8,136 @@ editor: visual
 ---
 
 ## Load libraries
+
 ```{r}
 library("tidyverse")
 library("here")
+library("patchwork")
+library("viridis")
 ```
+
+## load data
+
+```{r}
+data <- read_tsv("../data/02_dat_clean.tsv")
+```
+## Dataset dimensions
+```{r}
+dim(data)
+```
+The dataset has 81 observations and 18845 variables
+Each observation corresponds to a patient
+
+## gender and age distribution
+
+```{r}
+gender_bar <- data |> 
+  ggplot(mapping = aes(
+    x = sex,
+    fill = sex
+  )) +
+  geom_bar(
+    show.legend = FALSE
+  )+
+  geom_bar(show.legend = FALSE)+
+  geom_text(aes(
+    label = ..count..), 
+    stat = "count", 
+    vjust = 1.5, 
+    colour = "black"
+  )+
+  labs(
+    title = "Amount of patients",
+    subtitle = "stratified on gender",
+    y = ""
+  )
+
+
+gender_age_box <- data |> 
+  ggplot(mapping = aes(
+    x = sex,
+    y = age,
+    fill = sex
+  ))+
+  geom_violin(
+        alpha = 0.8,
+        show.legend = FALSE
+  )+
+  ggtitle("Violinplot of the age distribution")+
+  labs(
+    subtitle = "Stratified on gender",
+    y = ""
+  )+
+  theme(
+    panel.grid.major.x = element_blank()
+  )
+
+gender_bar + gender_age_box
+```
+
+## Ethnicity
+
+```{r}
+race_bar <- data |> 
+  ggplot(mapping = aes(
+    x = ethnicity,
+    fill = sex
+  ))+
+  geom_bar(
+    alpha = 0.8
+  )+
+  labs(
+    title = "Distribution of ethnicities",
+    y = ""
+  )+
+  theme(
+    panel.grid.major.x = element_blank()
+  )
+
+race_bar + labs(subtitle = "Stratified on gender") +
+   geom_bar(show.legend = FALSE)+
+  geom_text(aes(
+    label = ..count..), 
+    stat = "count", 
+    vjust = 1.5, 
+    colour = "black"
+  )
+```
+## Smoking status
+```{r}
+smoking_s_bar <- data |> 
+  ggplot(mapping = aes(
+    x = smoking_status,
+    fill = smoking_status
+  ))+
+  geom_bar(show.legend = FALSE)+
+  geom_text(aes(
+    label = ..count..), 
+    stat = "count", 
+    vjust = 1.5, 
+    colour = "black"
+  )+
+  scale_fill_viridis(discrete = TRUE, alpha = 0.6)+
+  labs(
+    title = "Distribution of type of smokers",
+    y = ""
+  )+
+  theme(
+    panel.grid.major.x = element_blank()
+  )
+
+smoking_s_bar
+```
+```{r}
+race_bar + facet_wrap(~smoking_status) + 
+  labs(subtitle = "Stratified on gender and smoking status")
+```
+
+
+
+
+
+
+
+
+
