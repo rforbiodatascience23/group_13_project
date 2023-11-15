@@ -30,6 +30,8 @@ data <- read_tsv(here("data/02_dat_clean.tsv"))
 Add colums of progression as catagorical from a contiunes variable
 
 ```{r}
+# adds cataorical colum surviral based on how many months a person survived.
+# adds after meta data colums to keep structor of meta - gene data
 
 data <- data |> 
   mutate( survival = case_when(
@@ -39,13 +41,34 @@ data <- data |>
     overall_survival_months < 60 ~ "good",
     overall_survival_months >= 60 ~ "Great"
     #overall_survival_months = Na ~ "Na"
-    ))
+    ),
+    .after = overall_survival_months)
+
+
 
 data |>
   select(overall_survival_months,survival)
 ```
 
 ## Add Clusters
+
+Perform clustering of the gene/trancripts express to see which samples might be form a subtype of cancer. The clustering will be performed using the tidyclust packages.
+
+```{r}
+# First define how to cluster
+# num_cluster are the numbers of clsuters to be formed
+# Linage_mehtod is which method the formations of clusted should be based on.
+
+data |>
+  select(-c(1:30))
+
+hc_spec <- hier_clust(
+  num_clusters = 4,
+  linkage_method = "average"
+)
+
+
+```
 
 ## Save augmented data
 
