@@ -27,4 +27,32 @@ data <- read_tsv(here("data/02_dat_clean.tsv"))
 
 ## Add catagorial progresstion
 
+Add colums of progression as catagorical from a contiunes variable
+
+```{r}
+
+data <- data |> 
+  mutate( survival = case_when(
+    overall_survival_months < 6 ~ "terrible",
+    overall_survival_months < 12 ~ "Bad",
+    overall_survival_months < 36 ~ "decent",
+    overall_survival_months < 60 ~ "good",
+    overall_survival_months >= 60 ~ "Great"
+    #overall_survival_months = Na ~ "Na"
+    ))
+
+data |>
+  select(overall_survival_months,survival)
+```
+
 ## Add Clusters
+
+## Save augmented data
+
+```{r}
+# Save as .tsv file
+write_tsv(
+  data, 
+  here("data/04_dat_augment.tsv")
+  )
+```
