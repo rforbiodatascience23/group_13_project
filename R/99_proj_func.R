@@ -32,10 +32,10 @@ extract_libraries <- function(file_path) {
 }
 
 # Function to check and install missing libraries from entire project
-check_and_install_libraries <- function() {
-  for (file_path in list.files('.')){
+check_and_install_libraries <- function(dir_path) {
+  for (file_path in list.files(dir_path)){
     # Extract library names
-    required_libraries <- extract_libraries(file_path)
+    required_libraries <- extract_libraries(paste0(dir_path, '/', file_path))
     
     # Install libraries if not installed
     for (library_name in required_libraries) {
