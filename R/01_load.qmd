@@ -47,7 +47,9 @@ expr_data |>
   summarise(n = n()) |>
   arrange(desc(n))
 ```
+
 We see that there are a lot of duplicated genes. This is due to multiple transcript mapping to the the same gene. Here we will sum over the rows where multiple transcripts map to the same gene
+
 ```{r}
 # Sum the FPKM values across multiple transcrips mapping
 # to the same gene
