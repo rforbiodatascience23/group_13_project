@@ -7,10 +7,25 @@ date: "2023-11-08"
 editor: visual
 ---
 
+## Install required libraries
+
+```{r}
+# Install here package
+if (!requireNamespace("here", quietly = TRUE)) {
+        install.packages("here", dependencies = TRUE)
+}
+
+# Install all required packages for the project via 
+# the custom check_and_install_libraries() function
+library("here")
+source(here("R/99_proj_func.R"))
+check_and_install_libraries()
+```
+
 ## Load libraries
+
 ```{r}
 library("quarto")
-library("here")
 ```
 
 ```{r}
