@@ -84,7 +84,7 @@ data <- data |>
 ```{r}
 # Save as .tsv file
 write_tsv(
-  data, 
+  data,
   here("data/02_dat_clean.tsv")
-  )
+)
 ```
