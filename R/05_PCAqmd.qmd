@@ -1,0 +1,88 @@
+---
+title: "05 PCA"
+subtitle: "R for Bio Data Science"
+format: html
+author: All
+date: "2023-11-15"
+editor: visual
+---
+
+## Load libraries
+
+```{r}
+library("tidyverse")
+library("here")
+library("readxl")
+library("tidyclust")
+library("tidymodels")
+library("corrr")
+
+library("caret")
+
+source(here("R/99_proj_func.R"))
+
+```
+
+## Load data
+
+```{r}
+# Load data
+data <- read_tsv(here("data/04_dat_augment.tsv"))
+```
+
+## Feature selection
+
+A reduciton of features is needed to do a PCA, and reduce overfitting. It will be done looking at corelations between the genes and filtering genes which highly corelations while keeping one to represent those features.
+
+Others ways could be inspetion of heatmap of correlation, Recursive feture elimintaion and more. Due to time contrains these will not be investigtated during this projekt.
+
+```{r}
+# Look at only gene data
+
+features_to_select <- data |>
+  select(-c(1:31))
+
+features_to_select_none_na <- features_to_select |> 
+  select_if(
+    ~ !any(is.na(.))
+    ) 
+
+features_to_select_fully_clear <- features_to_select|>
+  select_if(
+    is.numeric
+    )
+
+
+
+feature_cor <- features_to_select |>
+  correlate()
+feature_cor2 <- features_to_select |>
+  cor()
+
+findCorrelation(feature_cor2,cutoff = 0.9)
+
+feature_cor2
+
+```
+
+## PCA
+
+Now we look
+
+```{r}
+
+input_pca <- data |>
+  select(-c(1:31))
+
+input_pca |>
+  correlate()
+
+pca_fit <- input_pca |>
+  select_if(is.numeric) |>
+  prcomp(center = TRUE,
+         scale = TRUE)
+
+
+plot_pca |>
+  str()
+```
