@@ -12,14 +12,14 @@ editor: visual
 ```{r}
 # Install here package
 if (!requireNamespace("here", quietly = TRUE)) {
-        install.packages("here", dependencies = TRUE)
+  install.packages("here", dependencies = TRUE)
 }
 
-# Install all required packages for the project via 
+# Install all required packages for the project via
 # the custom check_and_install_libraries() function
 library("here")
 source(here("R/99_proj_func.R"))
-check_and_install_libraries(dir=here("R"))
+check_and_install_libraries(dir_path = here("R"))
 ```
 
 ## Load libraries

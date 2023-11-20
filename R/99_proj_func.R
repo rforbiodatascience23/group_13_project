@@ -46,4 +46,3 @@ check_and_install_libraries <- function(dir_path) {
   }
   print("All required libraries checked and installed.")
 }
-
