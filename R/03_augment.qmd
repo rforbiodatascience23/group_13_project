@@ -7,4 +7,135 @@ date: "2023-11-15"
 editor: visual
 ---
 
-## 
+## Load libraries
+
+```{r}
+library("tidyverse")
+library("here")
+library("readxl")
+library("tidyclust")
+library("tidymodels")
+source(here("R/99_proj_func.R"))
+```
+
+## Load data
+
+```{r}
+# Load data
+data <- read_tsv(here("data/02_dat_clean.tsv"))
+```
+
+## Add catagorial progresstion
+
+Add colums of progression as catagorical from a contiunes variable
+
+```{r}
+# adds cataorical colum surviral based on how many months a person survived.
+# adds after meta data colums to keep structor of meta - gene data
+
+data <- data |>
+  mutate(
+    survival = case_when(
+      overall_survival_months < 6 ~ "Terrible",
+      overall_survival_months < 12 ~ "Bad",
+      overall_survival_months < 36 ~ "Decent",
+      overall_survival_months < 60 ~ "Good",
+      overall_survival_months >= 60 ~ "Great"
+    ),
+    .after = overall_survival_months
+  )
+
+# View changes
+data |>
+  select(overall_survival_months, survival)
+```
+
+## Add categorical survival status
+
+```{r}
+# Make the survival status variable numeric
+data <- data |>
+  mutate(
+    survival_status = case_when(
+      status_at_time_of_last_follow_up == "dead" ~ 0,
+      status_at_time_of_last_follow_up == "alive" ~ 1
+    ),
+    .after = status_at_time_of_last_follow_up
+  )
+
+# View changes
+data |>
+  select(status_at_time_of_last_follow_up, survival_status)
+```
+
+## Add Clusters
+
+Perform clustering of the gene/trancripts express to see which samples might be form a subtype of cancer. The clustering will be performed using the tidyclust packages.
+
+```{r}
+# First define how to cluster
+# num_cluster are the numbers of clsuters to be formed
+# Linage_mehtod is which method the formations of clusted should be based on.
+hc_data <- data |>
+  select(-c(1:30))
+
+hc_spec <- hier_clust(
+  num_clusters = 4,
+  linkage_method = "centroid"
+)
+
+
+# sub set data for computing
+hc_data <- hc_data |>
+  select(c(1:15500))
+
+
+hc_spec_fit <- hc_spec |>
+  fit(~., data = hc_data)
+hc_spec_fit
+
+
+# hc_spec_fit$fit |> plot()
+
+
+assigned_clusteres <- extract_cluster_assignment(hc_spec_fit) |>
+  pluck(".cluster")
+
+
+
+
+# add cluster asignment after last colum of meta data
+data <- data |>
+  mutate(
+    hc_cluster = assigned_clusteres,
+    .after = survival
+  )
+
+data |>
+  select(c(29:34))
+
+```
+
+```{r}
+# temp data set
+hc_spec <- hier_clust(
+  num_clusters = 4,
+  linkage_method = "average"
+)
+
+hc_spec_fit <- hc_spec |>
+  fit(~., data = mtcars)
+
+
+hc_spec_fit$fit |> plot()
+```
+
+## Save augmented data
+
+```{r}
+# Save as .tsv file
+write_tsv(
+  data,
+  here("data/04_dat_augment.tsv")
+)
+```

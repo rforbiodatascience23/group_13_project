@@ -1,0 +1,65 @@
+---
+title: "04 - Perform PCA"
+subtitle: "R for Bio Data Science"
+format: html
+author: Mikkel Niklas Rasmussen (s193518)
+date: "2023-11-20"
+editor: visual
+---
+
+## Load libraries
+
+```{r}
+library("tidyverse")
+library("here")
+library("DESeq2")
+library("broom")
+library("cowplot")
+```
+
+
+## Load data
+
+```{r}
+data <- read_tsv(here("data/02_dat_clean.tsv"))
+```
+
+## Perform PCA on the gene expression data
+
+```{r}
+pca_data <- data |>
+  select(-c(1:30))
+
+# Log transformation with pseudocount equal to 1
+pca_fit <- log2(pca_data + 1) |>
+  prcomp()
+
+# Create PCA plt
+pca_fit %>%
+  augment(data) %>% # add original dataset back in
+  ggplot(aes(.fittedPC1, .fittedPC2, color = sex)) +
+  geom_point(size = 1.5) +
+  theme_half_open(12) +
+  background_grid()
+```
+
+```{r}
+# Look at how
+pca_fit %>%
+  tidy(matrix = "eigenvalues")
+
+# Scree plot
+pca_fit %>%
+  tidy(matrix = "eigenvlues") %>%
+  slice_head(n = 10) |>
+  ggplot(aes(PC, percent)) +
+  geom_col(fill = "#56B4E9", alpha = 0.8) +
+  geom_line(aes(y = cumulative, color = "red")) +
+  scale_x_continuous(breaks = 1:9) +
+  scale_y_continuous(
+    labels = scales::percent_format(),
+    expand = expansion(mult = c(0, 0.01))
+  ) +
+  theme_minimal_hgrid(12)
+
+```
