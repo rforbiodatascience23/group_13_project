@@ -1,8 +1,0 @@
----
-title: "05 - Create heatmap analysis"
-subtitle: "R for Bio Data Science"
-format: html
-author: Mikkel Niklas Rasmussen (s193518)
-date: "2023-11-08"
-editor: visual
----

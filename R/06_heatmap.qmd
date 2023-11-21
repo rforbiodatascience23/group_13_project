@@ -1,0 +1,154 @@
+---
+title: "06 - Create heatmap analysis"
+subtitle: "R for Bio Data Science"
+format: html
+author: Thomas Tams (s204540)
+date: "2023-11-21"
+editor: visual
+---
+
+## Load libraries
+
+```{r}
+library('tidyverse')
+library("here")
+source(here("R/99_proj_func.R"))
+```
+
+## Load data
+
+```{r}
+# Load data
+expression_data <- read_tsv(here("data/transcript.tsv"))
+```
+
+## Nest expression data
+
+```{r}
+expression_data |>
+  head(10) -> data_head
+```
+
+## Log transform expression data with log2(1 + FPKM)
+
+```{r}
+log_row <- function(row_values, pseudo_count = 0) {
+  log(pseudo_count + row_values)
+}
+
+expr_log <- expression_data |>
+  group_by(sample_id) |>
+  nest() |>
+  mutate(data = map(.x = data,
+                    .f = ~log_row(row_values = .x,
+                                  pseudo_count = 1))) |>
+  unnest(data) |>
+  ungroup()
+```
+
+## Transpose data to have transcript per row
+
+```{r}
+expr_log_trans <- expr_log |>
+  group_by(sample_id) |>
+  pivot_longer(-sample_id,
+              names_to = "transcript_id") |>
+  pivot_wider(names_from = sample_id,
+   values_from = value) |>
+  ungroup() 
+
+#|>
+#  head(10)
+```
+
+## Filter away transcripts with only zeros
+
+```{r}
+expr_log_trans_no_zero <- expr_log_trans |>
+  filter(!if_all(starts_with("S"), ~ . == 0))
+```
+
+## Perform k-means clustering for each transcript expression data
+
+```{r}
+# Function to perform k-means clustering on a single row
+cluster_row <- function(row, k) {
+  row_data <- row
+  cluster_result <- kmeans(row_data, centers = k, algorithm = "Lloyd")
+  return(list(cluster = cluster_result$cluster, centers = cluster_result$centers))
+}
+
+# Clustering the expression levels for each transcript
+# into two groups (low and high expression)
+cluster_data <- expr_log_trans_no_zero |>
+  group_by(transcript_id) |>
+  nest() |>
+  ungroup() |>
+  mutate(cluster_data = map(.x = data,
+                           ~cluster_row(unlist(.x), k=2)))
+
+cluster_tidy <- cluster_data |>
+  mutate(cluster = map(cluster_data, "cluster"),
+         centers = map(cluster_data, "centers")) |>
+  unnest_wider(cluster) |>
+  unnest_wider(centers) |>
+  select(-c(data, cluster_data)) |>
+  rename(cluster_1 = '1',
+         cluster_2 = '2')
+```
+
+## Find which transcripts have at least 6 expression values in each cluster
+
+```{r}
+# Select transcripts with a state fold change of > 3
+fold_change <- function(val_1, val_2){
+  fold_change <- max(val_1, val_2) - min(val_1, val_2)
+  return(fold_change)
+}
+
+above_state_fold <- cluster_tidy |>
+  mutate(fold_change = map2(.x = cluster_1,
+                            .y = cluster_2,
+                            .f = ~fold_change(val_1 = .x,
+                                              val_2 = .y))) |>
+  filter(!fold_change == Inf) |>
+  filter(fold_change > 3)
+
+# Pivot longer for grouping by transcripts and cluster groupings
+above_state_fold_long <- above_state_fold |>
+  pivot_longer(cols = starts_with("S"),
+               names_to = "sample_id",
+               values_to = "cluster_int")
+
+
+# Count number of expression values in each cluster
+# for all transcripts and select transcript with with
+# more than 6 in each group
+selected_transcripts <- above_state_fold_long |>
+  group_by(transcript_id) |>
+  summarise(n_c1 = sum(case_when(cluster_int == 1 ~ 1,
+                                TRUE ~ 0)),
+            n_c2 = sum(case_when(cluster_int == 2 ~ 1,
+                                 TRUE ~ 0))) |> 
+  filter(n_c1 >= 6 & n_c2 >= 6) |>
+  pull(transcript_id)
+
+
+above_state_fold |>
+  filter(transcript_id %in% selected_transcripts) |>
+  select(transcript_id, fold_change) |>
+  arrange(fold_change) |>
+  view()
+```
+
+Find 69 with expression samples which also has genome sequencing data log2(1 + FPKM) (probably transformed already in from excel sheet)
+
+Search for high and low expression characteristics over the samples
+
+\* Divided each transcript into two groups (states) via k-means clustering
+
+\* Only transcripts with at least 6 samples in each state should are continued with
+
+\* having a state-average fold change larger than 3
+
+-   avg(max(state_averages)) / average(min(state_averages)) \> 3
