@@ -19,11 +19,8 @@ source(here("R/99_proj_func.R"))
 ## Load data
 
 ```{r}
-# Load data (Comment one of the lines to choose your data)
-# Here we work with summed transcripts
-#data <- read_tsv(here("data/01_dat_load.tsv"))
-# Here we work with gene expression on the transcripts level
-data <- read_tsv(here("data/01_2_dat_load.tsv"))
+# Load data 
+data <- read_tsv(here("data/01_dat_load.tsv"))
 ```
 
 ### Rename columns
@@ -37,7 +34,6 @@ data <- data |> clean_selected_cols(1:29)
 
 ## Check of NAs in the dataset
 
-We need to
 
 ```{r}
 data |>
@@ -59,8 +55,10 @@ Comment : The missing age is from a sample that is not part of the 81 samples wi
 data |>
   group_by(sample_id) |>
   filter(n() > 1)
-# There are no duplicates
+
 ```
+
+There are no duplicates
 
 ## Clean weird variables
 
@@ -87,5 +85,5 @@ data <- data |>
 
 ```{r}
 # Save as .tsv file
-write_tsv(data, "data/02_2_dat_clean.tsv")
+write_tsv(data, "data/02_dat_clean.tsv")
 ```
