@@ -1,0 +1,108 @@
+---
+title: "01 - Loading data v2"
+subtitle: "R for Bio Data Science"
+format: html
+author: El Mehdi Baknine (s194533)
+date: "2023-11-15"
+editor: visual
+---
+
+## Load libraries
+
+```{r}
+library("tidyverse")
+library("here")
+library("readxl")
+```
+
+## Load data
+
+```{r}
+# Load metadata from sheet 1
+meta_data <- read_excel(
+  here("data/_raw/raw_data.xlsx"),
+  sheet = "Suppl_Table1",
+  skip = 3,
+  na = c("NA", "--")
+)
+
+# Load RNA-seq expression data from sheet 10
+expr_data <- read_excel(
+  here("data/_raw/raw_data.xlsx"),
+  sheet = "Suppl_Table10",
+  skip = 1,
+  na = "NA"
+)
+```
+
+## Combine the metadata and expression sheets from the excel table
+
+First we will need to transpose the RNA-seq gene expression dataframe before joining it with the meta data. We
+
+```{r}
+# Check if there are duplicated transcripts (refseq)
+expr_data |>
+  group_by(refseq) |>
+  filter(n() > 1) |>
+  summarise(n = n()) |>
+  arrange(desc(n))
+```
+
+We see that there are no duplicated transcript refseq. We are good to go.
+
+```{r}
+# Concatenate gene and refseq colums to have one unique transcript ID not to lose information about gene ID
+expr_data_conc <- expr_data |>
+  unite(gene:refseq, 
+   col = "transcript_id", 
+   sep = "_",
+   remove = TRUE, 
+   na.rm = FALSE)
+```
+
+```{r}
+
+# We then need to transpose the expression dataframe
+# so that is can be joined with the metadata
+expr_data_conc_trans <- expr_data_conc |>
+  pivot_longer(-transcript_id,
+   names_to = "sample_id") |>
+  pivot_wider(names_from = transcript_id,
+   values_from = value)
+
+# Let's count how many samples have RNA-seq data
+meta_data |>
+  group_by(`RNA-seq`) |>
+  count()
+
+# Before joining we will check which samples will not be
+# joined
+meta_data |>
+  anti_join(expr_data_conc_trans,
+   by = join_by(`Sample-ID` == sample_id)) |> 
+  filter(`RNA-seq` == "no") |>
+  count()
+```
+
+We see that the samples that are not possible to join are for samples where the meta data also states that the is no RNA-seq data for the sample. Hence, it makes sense that it is not possible to join these.
+
+```{r}
+# Inner join the data
+all_data <- meta_data |>
+  inner_join(expr_data_conc_trans, 
+             by = join_by(`Sample-ID` == sample_id)) |>
+  rename("Sample_id" = `Sample-ID`)
+```
+
+```{r}
+# Save transcript data seperately
+write_tsv(expr_data_conc_trans, here("data/transcript.tsv"))
+```
+
+## Save the combined data
+
+```{r}
+# Save in data directory, as .tsv file
+write_tsv(all_data,
+ here("data/01_2_dat_load.tsv"))
+```
