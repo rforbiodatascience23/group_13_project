@@ -1,0 +1,20 @@
+---
+title: "04 - Logistic modelling of gene expression"
+subtitle: "R for Bio Data Science"
+format: html
+author: Mikkel Niklas Rasmussen (s193518)
+date: "2023-11-20"
+editor: visual
+---
+
+## Load libraries
+```{r}
+library(tidyverse)
+library(here)
+```
+
+## Load data
+
+```{r}
+data <- read_tsv(here("data/02_dat_clean.tsv"))
+```
