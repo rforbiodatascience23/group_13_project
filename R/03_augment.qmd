@@ -38,12 +38,12 @@ Add colums of progression as catagorical from a contiunes variable
 data <- data |>
   mutate(
     survival = case_when(
-      overall_survival_months < 6 ~ "terrible",
+      overall_survival_months < 6 ~ "Terrible",
       overall_survival_months < 12 ~ "Bad",
-      overall_survival_months < 36 ~ "decent",
-      overall_survival_months < 60 ~ "good",
-      overall_survival_months >= 60 ~ "Great"
-      # overall_survival_months = Na ~ "Na"
+      overall_survival_months < 36 ~ "Decent",
+      overall_survival_months < 60 ~ "Good",
+      overall_survival_months >= 60 ~ "Great",
+      overall_survival_months = NA ~ NA
     ),
     .after = overall_survival_months
   )
@@ -73,8 +73,9 @@ hc_spec <- hier_clust(
 
 
 # sub set data for computing
-hc_data <- hc_data |>
-  select(c(1:15500))
+hc_data <- log2(hc_data+1) |>
+  select(c(1:100))
+
 
 
 hc_spec_fit <- hc_spec |>
@@ -101,20 +102,6 @@ data <- data |>
 data |>
   select(c(29:34))
 
-```
-
-```{r}
-# temp data set
-hc_spec <- hier_clust(
-  num_clusters = 4,
-  linkage_method = "average"
-)
-
-hc_spec_fit <- hc_spec |>
-  fit(~., data = mtcars)
-
-
-hc_spec_fit$fit |> plot()
 ```
 
 ## Save augmented data
