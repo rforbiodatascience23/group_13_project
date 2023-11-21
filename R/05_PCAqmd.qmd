@@ -103,19 +103,32 @@ input_pca <- data |>
   select(-c(1:31))
 
 
-pca_fit <- input_pca + 1 |>
+pca_fit <- log2(input_pca + 1e-10) |>
   prcomp()
 
 
-plot_pca <- pca_fit |>
+plot_pca_hc <- pca_fit |>
   augment(data) |> 
-  ggplot(aes(.fittedPC1, .fittedPC2, color = sex)) +
+  ggplot(aes(.fittedPC1, .fittedPC2, color = hc_cluster)) + #look at survial or hc_cluster
   geom_point(size = 1.5) +
   theme_half_open(12) +
   background_grid()
 
-plot_pca
+plot_pca_hc
 
+plot_pca_sur <- pca_fit |>
+  augment(data) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = survial)) + #look at survial or hc_cluster
+  geom_point(size = 1.5) +
+  theme_half_open(12) +
+  background_grid()
+
+plot_pca_sur
+
+
+```
+
+```{r}
 pca_fit |>
   tidy("pcs") |> 
   mutate(percent = percent * 100) |> 
