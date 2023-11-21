@@ -19,7 +19,7 @@ if (!requireNamespace("here", quietly = TRUE)) {
 # the custom check_and_install_libraries() function
 library("here")
 source(here("R/99_proj_func.R"))
-check_and_install_libraries(dir=here("R"))
+check_and_install_libraries(dir_path=here("R"))
 ```
 
 ## Load libraries

@@ -20,7 +20,8 @@ source(here("R/99_proj_func.R"))
 
 ```{r}
 # Load data
-data <- read_tsv(here("data/01_dat_load.tsv"))
+#data <- read_tsv(here("data/01_dat_load.tsv"))
+data <- read_tsv(here("data/01_2_dat_load.tsv"))
 ```
 
 ### Rename columns
