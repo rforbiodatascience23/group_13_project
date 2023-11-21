@@ -2,7 +2,6 @@
 title: "03 - Describe data"
 subtitle: "R for Bio Data Science"
 format: html
-author: Mikkel Niklas Rasmussen (s193518)
 date: "2023-11-14"
 editor: visual
 ---
@@ -14,6 +13,7 @@ library("tidyverse")
 library("here")
 library("patchwork")
 library("viridis")
+library("plotly")
 ```
 
 ## load data
@@ -132,7 +132,24 @@ smoking_s_bar
 race_bar + facet_wrap(~smoking_status) + 
   labs(subtitle = "Stratified on gender and smoking status")
 ```
-
+### Ciggarete use
+```{r}
+yearly_smoke <- data |> 
+  mutate(smoking_history_pack_years = case_when(
+    smoking_history_pack_years == ">10PY" ~ 10.5,
+    TRUE ~ as.numeric(smoking_history_pack_years)  # Handling other cases
+  )) |> 
+  mutate(smoking_history_pack_years = as.integer(smoking_history_pack_years)) |>
+  mutate(smoking_history_pack_years = factor(smoking_history_pack_years)) |> 
+  ggplot(mapping = aes(x = reorder(smoking_history_pack_years))) +
+  geom_bar(
+    stat = "count", 
+    position = position_dodge()
+  )
+  
+  
+yearly_smoke 
+```
 
 
 
