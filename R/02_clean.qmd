@@ -17,6 +17,7 @@ source(here("R/99_proj_func.R"))
 ```
 
 ## Load data
+
 ```{r}
 # Load data (Comment one of the lines to choose your data)
 # Here we work with summed transcripts
@@ -26,7 +27,8 @@ data <- read_tsv(here("data/01_2_dat_load.tsv"))
 ```
 
 ### Rename columns
-We will start by cleaning the column names, as there does not seem to be any sort of pattern in the naming scheme. We will use the `janitor::clean_names()` function for this task, which is used inside of the custom `clean_selected_names
+
+We will start by cleaning the column names, as there does not seem to be any sort of pattern in the naming scheme. We will use the `janitor::clean_names()` function for this task, which is used inside of the custom \`clean_selected_names
 
 ```{r}
 # Cleaning column names
@@ -34,7 +36,9 @@ data <- data |> clean_selected_cols(1:29)
 ```
 
 ## Check of NAs in the dataset
-We need to 
+
+We need to
+
 ```{r}
 data |>
   summarise(
@@ -57,7 +61,6 @@ data |>
   filter(n() > 1)
 # There are no duplicates
 ```
-
 
 ## Clean weird variables
 

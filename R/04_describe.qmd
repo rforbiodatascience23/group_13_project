@@ -1,5 +1,5 @@
 ---
-title: "03 - Describe data"
+title: "04 - Describe data"
 subtitle: "R for Bio Data Science"
 format: html
 author: Mikkel Niklas Rasmussen (s193518)
