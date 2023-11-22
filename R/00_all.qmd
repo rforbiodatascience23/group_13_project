@@ -33,4 +33,14 @@ quarto_render(
   input = here("R/01_load.qmd"),
   output_file = "01_load.html"
 )
+
+quarto_render(
+  input = here("R/02_clean.qmd"),
+  output_file = "01_load.html"
+)
+
+quarto_render(
+  input = here("R/03_augment.qmd"),
+  output_file = "01_load.html"
+)
 ```
