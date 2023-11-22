@@ -19,14 +19,16 @@ library("plotly")
 ## load data
 
 ```{r}
-data <- read_tsv("../data/02_dat_clean.tsv")
+data <- read_tsv(here("data/04_dat_augment.tsv"))
 ```
+
 ## Dataset dimensions
+
 ```{r}
 dim(data)
 ```
-The dataset has 81 observations and 18845 variables
-Each observation corresponds to a patient
+
+The dataset has 81 observations and 18845 variables Each observation corresponds to a patient
 
 ## gender and age distribution
 
@@ -84,7 +86,8 @@ race_bar <- data |>
     fill = sex
   ))+
   geom_bar(
-    alpha = 0.8
+    alpha = 0.8,
+    position = "dodge"
   )+
   labs(
     title = "Distribution of ethnicities",
@@ -103,7 +106,9 @@ race_bar + labs(subtitle = "Stratified on gender") +
     colour = "black"
   )
 ```
+
 ## Smoking status
+
 ```{r}
 smoking_s_bar <- data |> 
   ggplot(mapping = aes(
@@ -128,11 +133,14 @@ smoking_s_bar <- data |>
 
 smoking_s_bar
 ```
+
 ```{r}
 race_bar + facet_wrap(~smoking_status) + 
   labs(subtitle = "Stratified on gender and smoking status")
 ```
+
 ### Ciggarete use
+
 ```{r}
 yearly_smoke <- data |> 
   mutate(smoking_history_pack_years = case_when(
@@ -150,5 +158,3 @@ yearly_smoke <- data |>
   
 yearly_smoke 
 ```
-
-
