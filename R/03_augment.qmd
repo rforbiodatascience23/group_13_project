@@ -14,10 +14,8 @@ library("tidyverse")
 library("here")
 library("readxl")
 library("tidyclust")
-source(here("R/99_proj_func.R"))
-
 library("tidymodels")
-
+source(here("R/99_proj_func.R"))
 ```
 
 ## Load data
@@ -38,20 +36,36 @@ Add colums of progression as catagorical from a contiunes variable
 data <- data |>
   mutate(
     survival = case_when(
-      overall_survival_months < 6 ~ "terrible",
+      overall_survival_months < 6 ~ "Terrible",
       overall_survival_months < 12 ~ "Bad",
-      overall_survival_months < 36 ~ "decent",
-      overall_survival_months < 60 ~ "good",
+      overall_survival_months < 36 ~ "Decent",
+      overall_survival_months < 60 ~ "Good",
       overall_survival_months >= 60 ~ "Great"
-      # overall_survival_months = Na ~ "Na"
     ),
     .after = overall_survival_months
   )
 
-
-
+# View changes
 data |>
   select(overall_survival_months, survival)
+```
+
+## Add categorical survival status
+
+```{r}
+# Make the survival status variable numeric
+data <- data |>
+  mutate(
+    survival_status = case_when(
+      status_at_time_of_last_follow_up == "dead" ~ 0,
+      status_at_time_of_last_follow_up == "alive" ~ 1
+    ),
+    .after = status_at_time_of_last_follow_up
+  )
+
+# View changes
+data |>
+  select(status_at_time_of_last_follow_up, survival_status)
 ```
 
 ## Add Clusters
@@ -62,7 +76,6 @@ Perform clustering of the gene/trancripts express to see which samples might be 
 # First define how to cluster
 # num_cluster are the numbers of clsuters to be formed
 # Linage_mehtod is which method the formations of clusted should be based on.
-
 hc_data <- data |>
   select(-c(1:30))
 
