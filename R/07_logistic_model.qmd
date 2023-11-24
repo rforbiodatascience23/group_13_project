@@ -9,12 +9,205 @@ editor: visual
 
 ## Load libraries
 ```{r}
-library(tidyverse)
-library(here)
+library("tidyverse")
+library("here")
+library("broom")
+```
+
+
+## Gravier example
+
+```{r}
+raw_dir <- "data/_raw/"
+data_file <- "gravier.RData"
+data_loc <- "https://github.com/ramhiser/datamicroarray/raw/master/data/"
+
+if (!dir.exists(raw_dir)) {
+  dir.create(path = raw_dir)
+}
+if (!file.exists(str_c(raw_dir, data_file))) {
+  download.file(
+    url = str_c(data_loc, data_file),
+    destfile = str_c(raw_dir, data_file)
+  )
+}
+load(file = str_c(raw_dir, data_file))
+
+gravier_clean <- gravier |>
+  bind_cols() |>
+  as_tibble()
+
+gravier_clean_aug <- gravier_clean |>
+  mutate(y = case_when(
+    y == "poor" ~ 1,
+    y == "good" ~ 0
+  )) |>
+  relocate(early_metastasis = y)
+
+
+my_first_model <- gravier_clean_aug |>
+  lm(
+    formula = g2E09 ~ early_metastasis,
+    data = _
+  )
+
+my_first_model |>
+  pluck("coefficients")
+
+gravier_clean_aug |>
+  group_by(early_metastasis) |>
+  summarise(mu = mean(g2E09))
+
+my_first_model |>
+  summary()
+
+gravier_clean_aug |>
+  group_by(early_metastasis) |>
+  summarise(mu = mean(g2E09))
+
+gravier_clean_aug
+
+gravier_clean_aug_long <- gravier_clean_aug |>
+  pivot_longer(
+    cols = starts_with("g"),
+    names_to = "gene",
+    values_to = "log2_expr_level"
+  )
+gravier_clean_aug_long
+
+gravier_clean_aug_long_nested <- gravier_clean_aug_long |>
+  group_by(gene) |>
+  nest() |>
+  ungroup()
+gravier_clean_aug_long_nested
+
+gravier_clean_aug_long_nested |>
+  filter(gene == "g2E09") |>
+  pull(data)
+
+gravier_clean_aug_long_nested <- gravier_clean_aug_long_nested |>
+  group_by(gene) |>
+  mutate(model_object = map(
+    .x = data,
+    .f = ~ lm(
+      formula = log2_expr_level ~ early_metastasis,
+      data = .x
+    )
+  ))
+gravier_clean_aug_long_nested
+
+gravier_clean_aug_long_nested |>
+  filter(gene == "g2E09") |>
+  pull(model_object)
+
+my_first_model
+tidy(x = my_first_model)
+
+tidy(
+  x = my_first_model,
+  conf.int = TRUE,
+  conf.level = 0.95
+)
+
+gravier_clean_aug_long_nested <- gravier_clean_aug_long_nested |>
+  mutate(model_object_tidy = map(
+    .x = model_object,
+    .f = ~ tidy(
+      x = .x,
+      conf.int = TRUE,
+      conf.level = 0.95
+    )
+  ))
+gravier_clean_aug_long_nested
+
+gravier_clean_aug_long_nested |>
+  filter(gene == "g2E09") |>
+  pull(model_object_tidy)
+
+gravier_estimates <- gravier_clean_aug_long_nested |>
+  unnest(model_object_tidy)
+gravier_estimates
+
+gravier_estimates <- gravier_estimates |>
+  filter(term == "early_metastasis") |>
+  select(gene, p.value, estimate, conf.low, conf.high) |>
+  ungroup()
+gravier_estimates
+
+gravier_estimates <- gravier_estimates |>
+  mutate(
+    q.value = p.adjust(p.value),
+    is_significant = case_when(
+      q.value <= 0.05 ~ "yes",
+      q.value > 0.05 ~ "no"
+    )
+  )
+gravier_estimates
+
+gravier_estimates |>
+  filter(is_significant == "yes") |>
+  select(gene, p.value, q.value)
+
+pl <- gravier_estimates |>
+  filter(is_significant == "yes") |>
+  ggplot(aes(
+    x = estimate,
+    y = fct_reorder(gene, estimate),
+    xmin = conf.low,
+    xmax = conf.high
+  )) +
+  geom_vline(xintercept = 0) +
+  geom_errorbarh() +
+  geom_point() +
+  theme_minimal(base_size = 16) +
+  theme(plot.title = element_text(hjust = 1)) +
+  labs(
+    x = "Estimates (95%CIs)",
+    y = "",
+    title = "Genes Associated with Early Metastasis in Small Node-Negative Breast Carcinoma",
+    caption = "Data from DOI: 10.1002/gcc.20820"
+  )
+
+library("ggrepel")
+pl <- gravier_estimates |>
+  mutate(lbl = case_when(
+    is_significant == "yes" ~ gene,
+    is_significant == "no" ~ ""
+  )) |>
+  ggplot(aes(
+    x = estimate,
+    y = -log10(p.value),
+    colour = is_significant,
+    label = lbl
+  )) +
+  geom_point(
+    size = 1,
+    alpha = 0.5
+  ) +
+  geom_text_repel(
+    size = 4,
+    max.overlaps = 20
+  ) +
+  geom_hline(yintercept = 0) +
+  theme_minimal(base_size = 16) +
+  theme(
+    plot.title = element_text(hjust = 1),
+    plot.subtitle = element_text(hjust = 1),
+    legend.position = "none"
+  ) +
+  labs(
+    x = "Estimates",
+    y = "-log10(p)",
+    title = "Genes Associated with Early Metastasis in Small Node-Negative Breast Carcinoma",
+    subtitle = "Genes highlighted in turquoise were significant after multiple testing correction",
+    caption = "Data from DOI: 10.1002/gcc.20820"
+  )
 ```
 
 ## Load data
 
 ```{r}
 data <- read_tsv(here("data/02_dat_clean.tsv"))
+
+#
 ```
