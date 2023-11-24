@@ -19,7 +19,7 @@ source(here("R/99_proj_func.R"))
 ## Load data
 
 ```{r}
-# Load data 
+# Load data
 data <- read_tsv(here("data/01_dat_load.tsv"))
 ```
 
@@ -55,7 +55,6 @@ Comment : The missing age is from a sample that is not part of the 81 samples wi
 data |>
   group_by(sample_id) |>
   filter(n() > 1)
-
 ```
 
 There are no duplicates
@@ -87,5 +86,6 @@ data <- data |>
 # Save as .tsv file
 write_tsv(
   data,
-  here("data/02_dat_clean.tsv"))
+  here("data/02_dat_clean.tsv")
+)
 ```
