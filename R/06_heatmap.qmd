@@ -19,21 +19,21 @@ source(here("R/99_proj_func.R"))
 
 ```{r}
 # Load data
-expression_data <- read_tsv(here("data/transcript.tsv"))
+data <- read_tsv(here("data/02_dat_clean.tsv"))
 ```
 
-## Nest expression data
+## Get expression data from all data
 
 ```{r}
-expression_data |>
-  head(10) -> data_head
+expression_data <- data |> 
+  select(1, 30:ncol(data))
 ```
 
 ## Log transform expression data with log2(1 + FPKM)
 
 ```{r}
 log_row <- function(row_values, pseudo_count = 0) {
-  log(pseudo_count + row_values)
+  log2(pseudo_count + row_values)
 }
 
 expr_log <- expression_data |>
@@ -55,10 +55,7 @@ expr_log_trans <- expr_log |>
               names_to = "transcript_id") |>
   pivot_wider(names_from = sample_id,
    values_from = value) |>
-  ungroup() 
-
-#|>
-#  head(10)
+  ungroup()
 ```
 
 ## Filter away transcripts with only zeros
@@ -132,13 +129,37 @@ selected_transcripts <- above_state_fold_long |>
                                  TRUE ~ 0))) |> 
   filter(n_c1 >= 6 & n_c2 >= 6) |>
   pull(transcript_id)
+```
 
+## Save selected transcripts expression data to csv
 
-above_state_fold |>
-  filter(transcript_id %in% selected_transcripts) |>
-  select(transcript_id, fold_change) |>
-  arrange(fold_change) |>
-  view()
+```{r}
+selected_transcript_expr <- expr_log_trans |>
+  filter(transcript_id %in% selected_transcripts)
+
+selected_transcript_expr |>
+  write_tsv(here("data/06_selected_transcript_expr.tsv"))
+```
+
+## Load expression if already exists
+
+```{r}
+if(!exists('selected_transcript_expr')){
+  selected_transcript_expr <- 
+    read_tsv(here("data/06_selected_transcript_expr.tsv"))
+}
+```
+
+```{r}
+expr_matrix <- as.matrix(selected_transcript_expr[, -1])
+rownames(expr_matrix) <- selected_transcript_expr$transcript_id
+
+expr_matrix |>
+  pheatmap::pheatmap(color=color_vector)
+
+color_vector <- colorRampPalette(c("darkblue", "turquoise", "green", "yellow"))(n = 100)
+
+color_vector
 ```
 
 Find 69 with expression samples which also has genome sequencing data log2(1 + FPKM) (probably transformed already in from excel sheet)
