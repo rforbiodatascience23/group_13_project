@@ -12,104 +12,64 @@ editor: visual
 library("tidyverse")
 library("here")
 library("broom")
+library("limma")
 ```
 
 
-## Gravier example
+## Load data
 
 ```{r}
-raw_dir <- "data/_raw/"
-data_file <- "gravier.RData"
-data_loc <- "https://github.com/ramhiser/datamicroarray/raw/master/data/"
+data <- read_tsv(here("data/03_dat_augment.tsv"))
+```
 
-if (!dir.exists(raw_dir)) {
-  dir.create(path = raw_dir)
-}
-if (!file.exists(str_c(raw_dir, data_file))) {
-  download.file(
-    url = str_c(data_loc, data_file),
-    destfile = str_c(raw_dir, data_file)
-  )
-}
-load(file = str_c(raw_dir, data_file))
+## Drop samples with NA in survival status 
 
-gravier_clean <- gravier |>
-  bind_cols() |>
-  as_tibble()
+```{r}
+data <- data |>
+  drop_na(survival_status)
+```
 
-gravier_clean_aug <- gravier_clean |>
-  mutate(y = case_when(
-    y == "poor" ~ 1,
-    y == "good" ~ 0
-  )) |>
-  relocate(early_metastasis = y)
+## Get expression data from all data
+```{r}
+# Extract the expression data
+expression_data <- data |>
+  select(survival_status, 32:ncol(data))
 
+# Log2 transform the FPKM expression data
+expr_log <- expression_data |>
+  mutate(across(-survival_status, ~ log2(. + 1)))
 
-my_first_model <- gravier_clean_aug |>
-  lm(
-    formula = g2E09 ~ early_metastasis,
-    data = _
-  )
+````
 
-my_first_model |>
-  pluck("coefficients")
+```{r}
 
-gravier_clean_aug |>
-  group_by(early_metastasis) |>
-  summarise(mu = mean(g2E09))
-
-my_first_model |>
-  summary()
-
-gravier_clean_aug |>
-  group_by(early_metastasis) |>
-  summarise(mu = mean(g2E09))
-
-gravier_clean_aug
-
-gravier_clean_aug_long <- gravier_clean_aug |>
+# Pivot longer
+expr_log_long <- expr_log |>
   pivot_longer(
-    cols = starts_with("g"),
+    cols = -survival_status,
     names_to = "gene",
     values_to = "log2_expr_level"
   )
-gravier_clean_aug_long
 
-gravier_clean_aug_long_nested <- gravier_clean_aug_long |>
+# Nest the data
+expr_log_long_nested <- expr_log_long |>
   group_by(gene) |>
   nest() |>
   ungroup()
-gravier_clean_aug_long_nested
 
-gravier_clean_aug_long_nested |>
-  filter(gene == "g2E09") |>
-  pull(data)
-
-gravier_clean_aug_long_nested <- gravier_clean_aug_long_nested |>
+# Model each gene with a logistic regression model
+expr_log_long_nested <- expr_log_long_nested |>
   group_by(gene) |>
   mutate(model_object = map(
     .x = data,
     .f = ~ lm(
-      formula = log2_expr_level ~ early_metastasis,
+      formula = log2_expr_level ~ survival_status,
       data = .x
     )
   ))
-gravier_clean_aug_long_nested
 
-gravier_clean_aug_long_nested |>
-  filter(gene == "g2E09") |>
-  pull(model_object)
-
-my_first_model
-tidy(x = my_first_model)
-
-tidy(
-  x = my_first_model,
-  conf.int = TRUE,
-  conf.level = 0.95
-)
-
-gravier_clean_aug_long_nested <- gravier_clean_aug_long_nested |>
+# Calculate confidence intervals
+expr_log_long_nested <- expr_log_long_nested |>
   mutate(model_object_tidy = map(
     .x = model_object,
     .f = ~ tidy(
@@ -118,37 +78,37 @@ gravier_clean_aug_long_nested <- gravier_clean_aug_long_nested |>
       conf.level = 0.95
     )
   ))
-gravier_clean_aug_long_nested
 
-gravier_clean_aug_long_nested |>
-  filter(gene == "g2E09") |>
-  pull(model_object_tidy)
+# Unnest
+expr_estimates <- expr_log_long_nested |>
+  unnest(model_object_tidy) |>
+  drop_na(p.value)
 
-gravier_estimates <- gravier_clean_aug_long_nested |>
-  unnest(model_object_tidy)
-gravier_estimates
-
-gravier_estimates <- gravier_estimates |>
-  filter(term == "early_metastasis") |>
+#
+expr_estimates <- expr_estimates |>
+  filter(term == "survival_status") |>
   select(gene, p.value, estimate, conf.low, conf.high) |>
   ungroup()
-gravier_estimates
+expr_estimates
 
-gravier_estimates <- gravier_estimates |>
+expr_estimates <- expr_estimates |>
   mutate(
-    q.value = p.adjust(p.value),
+    # q.value = p.adjust(p.value),
     is_significant = case_when(
-      q.value <= 0.05 ~ "yes",
-      q.value > 0.05 ~ "no"
+      p.value <= 10^(-3) ~ "yes",
+      p.value > 10^(-3) ~ "no"
     )
   )
-gravier_estimates
 
-gravier_estimates |>
+expr_estimates |>
   filter(is_significant == "yes") |>
-  select(gene, p.value, q.value)
+  select(gene, p.value) |>
+  View()
+```
 
-pl <- gravier_estimates |>
+
+```{r}
+pl1 <- expr_estimates |>
   filter(is_significant == "yes") |>
   ggplot(aes(
     x = estimate,
@@ -164,16 +124,20 @@ pl <- gravier_estimates |>
   labs(
     x = "Estimates (95%CIs)",
     y = "",
-    title = "Genes Associated with Early Metastasis in Small Node-Negative Breast Carcinoma",
-    caption = "Data from DOI: 10.1002/gcc.20820"
+    title = "Genes Associated with Small Cell Lung Cancer",
+    caption = "Data from DOI:https://doi.org/10.1038/nature14664"
   )
+pl1
 
 library("ggrepel")
-pl <- gravier_estimates |>
-  mutate(lbl = case_when(
-    is_significant == "yes" ~ gene,
-    is_significant == "no" ~ ""
-  )) |>
+pl2 <- expr_estimates |>
+  mutate(
+    gene = str_remove_all(gene, "_NM_.*"),
+    lbl = case_when(
+      is_significant == "yes" ~ gene,
+      is_significant == "no" ~ ""
+    )
+  ) |>
   ggplot(aes(
     x = estimate,
     y = -log10(p.value),
@@ -191,23 +155,14 @@ pl <- gravier_estimates |>
   geom_hline(yintercept = 0) +
   theme_minimal(base_size = 16) +
   theme(
-    plot.title = element_text(hjust = 1),
-    plot.subtitle = element_text(hjust = 1),
     legend.position = "none"
   ) +
   labs(
     x = "Estimates",
     y = "-log10(p)",
-    title = "Genes Associated with Early Metastasis in Small Node-Negative Breast Carcinoma",
-    subtitle = "Genes highlighted in turquoise were significant after multiple testing correction",
-    caption = "Data from DOI: 10.1002/gcc.20820"
+    title = "Genes Associated with Small Cell Lung Cancer",
+    subtitle = bquote("Genes highlighted in turquoise had a p-value < " * 10^-3),
+    caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   )
-```
-
-## Load data
-
-```{r}
-data <- read_tsv(here("data/02_dat_clean.tsv"))
-
-#
+pl2
 ```
