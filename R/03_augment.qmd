@@ -32,7 +32,6 @@ Add colums of progression as catagorical from a contiunes variable
 ```{r}
 # adds cataorical colum surviral based on how many months a person survived.
 # adds after meta data colums to keep structor of meta - gene data
-
 data <- data |>
   mutate(
     survival = case_when(
@@ -94,9 +93,7 @@ hc_spec_fit <- hc_spec |>
   fit(~., data = hc_data)
 hc_spec_fit
 
-
 # hc_spec_fit$fit |> plot()
-
 
 assigned_clusteres <- extract_cluster_assignment(hc_spec_fit) |>
   pluck(".cluster")
@@ -136,6 +133,6 @@ hc_spec_fit$fit |> plot()
 # Save as .tsv file
 write_tsv(
   data,
-  here("data/04_dat_augment.tsv")
+  here("data/03_dat_augment.tsv")
 )
 ```
