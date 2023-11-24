@@ -217,15 +217,10 @@ transposed_trancripts <- selected_transcript_expr|>
 
 ```{r}
 
-
-
-
 meta_data_seleted_trancripts <- data |>
   select(c(1:31)) |>
   left_join(transposed_trancripts,
             by = join_by(sample_id))
-  
-
 
 ```
 
@@ -242,7 +237,7 @@ hc_data <- meta_data_seleted_trancripts |>
 
 hc_spec <- hier_clust(
   num_clusters = 4,
-  linkage_method = "centroid"
+  linkage_method = "ward.D"
 )
 
 
@@ -258,18 +253,17 @@ hc_spec_fit <- hc_spec |>
 assigned_clusteres <- extract_cluster_assignment(hc_spec_fit) |>
   pluck(".cluster")
 
-
+length(which(assigned_clusteres == "Cluster_1"))
 
 
 # add cluster asignment after last colum of meta data
-data <- data |>
+data <- meta_data_seleted_trancripts |>
   mutate(
     hc_cluster = assigned_clusteres,
     .after = survival
   )
 
-data |>
-  select(c(29:34))
+
 
 ```
 
