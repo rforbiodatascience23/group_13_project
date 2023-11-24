@@ -14,10 +14,8 @@ library("tidyverse")
 library("here")
 library("readxl")
 library("tidyclust")
-source(here("R/99_proj_func.R"))
-
 library("tidymodels")
-
+source(here("R/99_proj_func.R"))
 ```
 
 ## Load data
@@ -34,7 +32,6 @@ Add colums of progression as catagorical from a contiunes variable
 ```{r}
 # adds cataorical colum surviral based on how many months a person survived.
 # adds after meta data colums to keep structor of meta - gene data
-
 data <- data |>
   mutate(
     survival = case_when(
@@ -42,16 +39,33 @@ data <- data |>
       overall_survival_months < 12 ~ "Bad",
       overall_survival_months < 36 ~ "Decent",
       overall_survival_months < 60 ~ "Good",
-      overall_survival_months >= 60 ~ "Great",
-      overall_survival_months = NA ~ NA
+
+      overall_survival_months >= 60 ~ "Great"
     ),
     .after = overall_survival_months
   )
 
-
-
+# View changes
 data |>
   select(overall_survival_months, survival)
+```
+
+## Add categorical survival status
+
+```{r}
+# Make the survival status variable numeric
+data <- data |>
+  mutate(
+    survival_status = case_when(
+      status_at_time_of_last_follow_up == "dead" ~ 0,
+      status_at_time_of_last_follow_up == "alive" ~ 1
+    ),
+    .after = status_at_time_of_last_follow_up
+  )
+
+# View changes
+data |>
+  select(status_at_time_of_last_follow_up, survival_status)
 ```
 
 ## Add Clusters
@@ -62,7 +76,6 @@ Perform clustering of the gene/trancripts express to see which samples might be 
 # First define how to cluster
 # num_cluster are the numbers of clsuters to be formed
 # Linage_mehtod is which method the formations of clusted should be based on.
-
 hc_data <- data |>
   select(-c(1:30))
 
@@ -82,9 +95,7 @@ hc_spec_fit <- hc_spec |>
   fit(~., data = hc_data)
 hc_spec_fit
 
-
 # hc_spec_fit$fit |> plot()
-
 
 assigned_clusteres <- extract_cluster_assignment(hc_spec_fit) |>
   pluck(".cluster")
@@ -110,6 +121,6 @@ data |>
 # Save as .tsv file
 write_tsv(
   data,
-  here("data/04_dat_augment.tsv")
+  here("data/03_dat_augment.tsv")
 )
 ```
