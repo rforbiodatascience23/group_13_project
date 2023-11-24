@@ -1,5 +1,5 @@
 ---
-title: "04 - Logistic modelling of gene expression"
+title: "07 - Logistic modelling of gene expression"
 subtitle: "R for Bio Data Science"
 format: html
 author: Mikkel Niklas Rasmussen (s193518)
@@ -120,7 +120,6 @@ pl1 <- expr_estimates |>
   geom_errorbarh() +
   geom_point() +
   theme_minimal(base_size = 16) +
-  theme(plot.title = element_text(hjust = 1)) +
   labs(
     x = "Estimates (95%CIs)",
     y = "",
@@ -128,6 +127,7 @@ pl1 <- expr_estimates |>
     caption = "Data from DOI:https://doi.org/10.1038/nature14664"
   )
 pl1
+ggsave(here("results/07_associated_genes_CI.png"), pl1)
 
 library("ggrepel")
 pl2 <- expr_estimates |>
@@ -165,4 +165,5 @@ pl2 <- expr_estimates |>
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   )
 pl2
+ggsave(here("results/07_associated_genes_vulcano_plot.png"), pl2)
 ```
