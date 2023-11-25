@@ -229,3 +229,83 @@ ridgeline_plot <- data |>
 ridgeline_plot
 
 ```
+
+```{r}
+# Use t-test to investigate difference between groups
+t_result <- t.test(smoking_history_pack_years ~ status_at_time_of_last_follow_up,
+                   data = data, na.rm = TRUE)
+
+# Calculate means
+means <- data |> 
+   mutate(smoking_history_pack_years = case_when(
+    smoking_history_pack_years == "10>PY" ~ 10,
+    TRUE ~ as.numeric(smoking_history_pack_years)
+  )) |> 
+  group_by(status_at_time_of_last_follow_up) |> 
+  summarise(mu = mean(smoking_history_pack_years, na.rm = TRUE),
+            label = sprintf("mean[%s] == %0.2f", status_at_time_of_last_follow_up, mu)) |> unique()
+means
+
+survival_boxplot_jitter <- data |> 
+  mutate(smoking_history_pack_years = case_when(
+    smoking_history_pack_years == "10>PY" ~ 10,
+    TRUE ~ as.numeric(smoking_history_pack_years)
+  )) |> 
+  drop_na(smoking_history_pack_years) |> 
+  ggplot(aes(
+    x = status_at_time_of_last_follow_up, 
+    y = smoking_history_pack_years
+  )) +
+  geom_violin(
+    aes(fill = status_at_time_of_last_follow_up),
+    na.rm = TRUE
+    )+
+  geom_boxplot(
+    #aes(#fill = status_at_time_of_last_follow_up), 
+    alpha = 0.2, 
+    outlier.shape = NA,
+    width = 0.5
+  ) +
+  geom_jitter(
+    aes(color = status_at_time_of_last_follow_up),
+    width = 0.1,  
+    alpha = 0.2,
+    size = 4
+  ) +
+  scale_fill_brewer(palette = "Set3") + 
+  scale_color_brewer(palette = "Set1") + 
+  theme_minimal() + 
+  labs(
+    title = "Smoking History and Patient Survival Status", 
+    subtitle = "Distribution of packs per year smoked across survival statuses", 
+    x = "Status at Time of Last Follow-Up", 
+    y = "Smoking History (Packs per Year)", 
+    fill = "Survival Status",  
+    color = "Survival Status"  
+  ) +
+  theme(legend.position = "bottom")  
+
+
+survival_boxplot_jitter+
+  geom_point(
+    data = means,
+    mapping = aes(
+      x = status_at_time_of_last_follow_up,
+      y = mu
+    ),
+    color = "purple",
+    size = 3
+  )+
+  geom_label(
+    data = means,
+    mapping = aes(
+      x = status_at_time_of_last_follow_up,
+      y = mu,
+      label = label
+    ),
+    parse = TRUE,
+    fill = "white",
+    hjust = 0.1,
+    vjust = 0.1
+  )
+```
