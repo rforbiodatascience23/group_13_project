@@ -46,6 +46,20 @@ data <- data |>
     .after = overall_survival_months
   )
 
+data <- data |> 
+  mutate(
+    treatment_group = case_when(
+      is.na(chemotherapy_neo_adjuvant_yes_no) | is.na(chemotherapy_yes_no) | is.na(radiation_yes_no) ~ "Data Missing",
+      chemotherapy_neo_adjuvant_yes_no == "yes" & chemotherapy_yes_no == "yes" & radiation_yes_no == "yes" ~ "All Treatments",
+      chemotherapy_neo_adjuvant_yes_no == "yes" & chemotherapy_yes_no == "yes" & radiation_yes_no == "no" ~ "Chemo with Neoadjuvants",
+      chemotherapy_neo_adjuvant_yes_no == "no" & chemotherapy_yes_no == "yes" & radiation_yes_no == "yes" ~ "Chemo and Radiation",
+      chemotherapy_neo_adjuvant_yes_no == "no" & chemotherapy_yes_no == "yes" & radiation_yes_no == "no" ~ "Chemo Only",
+      chemotherapy_neo_adjuvant_yes_no == "no" & chemotherapy_yes_no == "no" & radiation_yes_no == "yes" ~ "Radiation Only",
+      chemotherapy_neo_adjuvant_yes_no == "no" & chemotherapy_yes_no == "no" & radiation_yes_no == "no" ~ "No treatment",
+      TRUE ~ "Other Combinations"
+    )
+  )
+
 # View changes
 data |>
   select(overall_survival_months, survival)
