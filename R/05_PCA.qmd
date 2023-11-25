@@ -96,8 +96,6 @@ plot_pca_ethnicity <- pca_fit |>
 
 ```{r}
 
-
-
 for (x in colnames(data[1:32])) {
   pca_meta_data(x)
 }
