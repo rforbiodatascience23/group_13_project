@@ -29,32 +29,19 @@ expression_data <- data |>
   select(1, 30:ncol(data))
 ```
 
-## Log transform expression data with log2(1 + FPKM)
+## Log transform and transpose data to have transcript per row
 
 ```{r}
-log_row <- function(row_values, pseudo_count = 0) {
-  log2(pseudo_count + row_values)
-}
-
-expr_log <- expression_data |>
-  group_by(sample_id) |>
-  nest() |>
-  mutate(data = map(.x = data,
-                    .f = ~log_row(row_values = .x,
-                                  pseudo_count = 1))) |>
-  unnest(data) |>
-  ungroup()
-```
-
-## Transpose data to have transcript per row
-
-```{r}
-expr_log_trans <- expr_log |>
+# Log2(1 + FPKM) transformation of expression value
+# and transposing of the expression data
+expr_log_trans <- expression_data |>
   group_by(sample_id) |>
   pivot_longer(-sample_id,
-              names_to = "transcript_id") |>
+              names_to = "transcript_id",
+              values_to = "expression_value") |>
+  mutate(expression_value = log2(1 + expression_value)) |>
   pivot_wider(names_from = sample_id,
-   values_from = value) |>
+              values_from = expression_value) |>
   ungroup()
 ```
 
@@ -65,70 +52,182 @@ expr_log_trans_no_zero <- expr_log_trans |>
   filter(!if_all(starts_with("S"), ~ . == 0))
 ```
 
-## Perform k-means clustering for each transcript expression data
+## Kmeans clustering on each transcript
+
+For each individual transcript we split the expression values into two states, which should correspond to a high and low expression state.
 
 ```{r}
-# Function to perform k-means clustering on a single row
-cluster_row <- function(row, k) {
-  row_data <- row
-  cluster_result <- kmeans(row_data, centers = k, algorithm = "Lloyd")
-  return(list(cluster = cluster_result$cluster, centers = cluster_result$centers))
+# Clustering function that clust
+kmeans_cluster_row <- function(transcript_expr_data) {
+  # Transpose tibble to fit into the kmeans function
+  transposed_tibble <- transcript_expr_data |>
+    pivot_longer(cols = everything(),
+                 names_to = "sample_id")
+  
+  # Clustering
+  cl <- transposed_tibble |>
+    select(value) |>
+    kmeans(centers=2)
+  
+  # Chain clustering states to each expression value
+  cluster_tibble <- transposed_tibble |>
+    mutate(cluster_int = cl$cluster) |>
+    pivot_wider(names_from = sample_id,
+                values_from = value)
+  
+  return(cluster_tibble)
 }
 
-# Clustering the expression levels for each transcript
-# into two groups (low and high expression)
-cluster_data <- expr_log_trans_no_zero |>
+# Perform kmeans clustering on each transcript
+clust_data <- expr_log_trans_no_zero |>
   group_by(transcript_id) |>
   nest() |>
-  ungroup() |>
-  mutate(cluster_data = map(.x = data,
-                           ~cluster_row(unlist(.x), k=2)))
+  mutate(data = map(.x = data, 
+                    .f = ~kmeans_cluster_row(.x))) |>
+  unnest(data) |>
+  ungroup()
 
-cluster_tidy <- cluster_data |>
-  mutate(cluster = map(cluster_data, "cluster"),
-         centers = map(cluster_data, "centers")) |>
-  unnest_wider(cluster) |>
-  unnest_wider(centers) |>
-  select(-c(data, cluster_data)) |>
-  rename(cluster_1 = '1',
-         cluster_2 = '2')
+# Go to long format
+clust_data_long <- clust_data |>
+  pivot_longer(cols=-c(transcript_id, cluster_int),
+               names_to = 'sample_id',
+               values_to = 'expression_value') |>
+  drop_na()
 ```
 
-## Find which transcripts have at least 6 expression values in each cluster
+## Check list
 
 ```{r}
-# Select transcripts with a state fold change of > 3
+# Average expression fold change check
 fold_change <- function(val_1, val_2){
   fold_change <- max(val_1, val_2) - min(val_1, val_2)
   return(fold_change)
 }
 
-above_state_fold <- cluster_tidy |>
-  mutate(fold_change = map2(.x = cluster_1,
-                            .y = cluster_2,
+avg_fold_change <- clust_data_long |>
+  group_by(transcript_id, cluster_int) |>
+  summarize(avg_expression = mean(expression_value)) |>
+  ungroup(cluster_int) |>
+  pivot_wider(names_from = cluster_int,
+              values_from = avg_expression) |>
+  rename(cluster_1_avg_expr = '1',
+         cluster_2_avg_expr = '2') |>
+  mutate(fold_change = map2(.x = cluster_1_avg_expr,
+                            .y = cluster_2_avg_expr,
                             .f = ~fold_change(val_1 = .x,
                                               val_2 = .y))) |>
+  ungroup()
+
+# Save a list of transcript following 
+# average expression fold change > 3
+above_fold_change_threshold <- avg_fold_change |>
   filter(!fold_change == Inf) |>
-  filter(fold_change > 3)
-
-# Pivot longer for grouping by transcripts and cluster groupings
-above_state_fold_long <- above_state_fold |>
-  pivot_longer(cols = starts_with("S"),
-               names_to = "sample_id",
-               values_to = "cluster_int")
-
-
-# Count number of expression values in each cluster
-# for all transcripts and select transcript with with
-# more than 6 in each group
-selected_transcripts <- above_state_fold_long |>
-  group_by(transcript_id) |>
-  summarise(n_c1 = sum(case_when(cluster_int == 1 ~ 1,
-                                TRUE ~ 0)),
-            n_c2 = sum(case_when(cluster_int == 2 ~ 1,
-                                 TRUE ~ 0))) |> 
-  filter(n_c1 >= 6 & n_c2 >= 6) |>
+  filter(fold_change > 3) |>
   pull(transcript_id)
+
+
+# 6 expression values in each state check
+count_clusters <- clust_data_long |>
+  filter(transcript_id %in% above_fold_change_threshold) |>
+  group_by(transcript_id) |>
+  summarize(cluster1_n = sum(cluster_int == 1),
+            cluster2_n = sum(cluster_int == 2)) |>
+  ungroup()
+
+# Save a list of transcript ids which have 6 or more
+# expression values in each state
+more_than_6_in_each_cluster <- count_clusters |>
+  filter(cluster1_n >= 6 & cluster2_n >= 6) |>
+  pull(transcript_id)
+
+# Perform t-test and calculate false discovery rate q-values
+clust_data_long_test <- clust_data_long |>
+  filter(transcript_id %in% more_than_6_in_each_cluster) |>
+  group_by(transcript_id) |>
+  summarize(p_value = t.test(expression_value ~ cluster_int)$p.value) |>
+  mutate(q_value = p.adjust(p_value, method = "BH"))
+
+# Save a list of 
+below_q_value <- clust_data_long_test |>
+  filter(q_value < 0.01) |>
+  pull(transcript_id)
+
+
+clust_data_long |>
+  filter(transcript_id %in% below_q_value) |>
+  head(486) |>
+  select(-sample_id) |>
+  group_by(transcript_id) |>
+  summarise(n=n())
+
+clust_data_long |>
+  filter(transcript_id %in% below_q_value) |>
+  head(486) |>
+  select(-sample_id) |>
+  mutate(cluster_int = as.character(cluster_int)) |>
+  group_by(transcript_id) |>
+    summarise(
+    p_value = fisher.test(table(expression_value, cluster_int))$p.value
+  )
+
+
+```
+
+```{r}
+selected_transcripts <- below_q_value
+selected_transcripts |>
+  as_tibble() |>
+  write_tsv(here("data/below.tsv"))
+
+if(!exists('selected_transcripts')){
+  selected_transcripts <- 
+    read_tsv(here("data/below.tsv"))
+}
+
+selected_transcripts <- selected_transcripts |>
+  as_vector()
+```
+
+```{r}
+# Sample data
+set.seed(123)
+gene_data <- data.frame(
+  Group = rep(c("Group1", "Group2"), each = 10),
+  Gene1 = sample(c(0, 1), 20, replace = TRUE),
+  Gene2 = sample(c(0, 1), 20, replace = TRUE),
+  Gene3 = sample(c(0, 1), 20, replace = TRUE),
+  Gene4 = sample(c(0, 1), 20, replace = TRUE),
+  Gene5 = sample(c(0, 1), 20, replace = TRUE),
+  Gene6 = sample(c(0, 1), 20, replace = TRUE)
+  # ... add more genes as needed
+)
+
+```
+
+```{r}
+# Reshape data for easier analysis
+gene_data_long <- gene_data %>%
+  pivot_longer(cols = -Group, names_to = "Gene", values_to = "Expression")
+
+gene_data_long
+
+# Perform Fisher's exact test for each gene
+fisher_results <- gene_data_long |>
+  group_by(Gene) |>
+  summarise(
+    p_value = fisher.test(table(Expression, Group))$p.value
+  )
+
+# Print the results
+fisher_results
+
+# Visualize the results
+fisher_results %>%
+  ggplot(aes(x = Gene, y = -log10(p_value))) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Fisher's Exact Test for Gene Expression",
+       x = "Gene",
+       y = "-log10(p-value)")
 ```
 
 ## Save selected transcripts expression data to csv
@@ -137,8 +236,8 @@ selected_transcripts <- above_state_fold_long |>
 selected_transcript_expr <- expr_log_trans |>
   filter(transcript_id %in% selected_transcripts)
 
-selected_transcript_expr |>
-  write_tsv(here("data/06_selected_transcript_expr.tsv"))
+#selected_transcript_expr |>
+#  write_tsv(here("data/06_selected_transcript_expr.tsv"))
 ```
 
 ## Load expression if already exists
@@ -151,13 +250,30 @@ if(!exists('selected_transcript_expr')){
 ```
 
 ```{r}
+# check how many genes
+selected_transcript_expr_split <- selected_transcript_expr |>
+  separate(transcript_id, into = c("gene", "id"), sep = "_", extra="merge")
+
+selected_transcript_expr_split |>
+  group_by(gene) |>
+  summarise(n = n()) |>
+  arrange(desc(n))
+```
+
+```{r}
+
+```
+
+```{r}
 expr_matrix <- as.matrix(selected_transcript_expr[, -1])
 rownames(expr_matrix) <- selected_transcript_expr$transcript_id
+
+color_vector <- colorRampPalette(c("darkblue", "turquoise", "green", "yellow"))(n = 100)
 
 expr_matrix |>
   pheatmap::pheatmap(color=color_vector)
 
-color_vector <- colorRampPalette(c("darkblue", "turquoise", "green", "yellow"))(n = 100)
+
 
 color_vector
 ```
@@ -166,10 +282,31 @@ Find 69 with expression samples which also has genome sequencing data log2(1 + F
 
 Search for high and low expression characteristics over the samples
 
-\* Divided each transcript into two groups (states) via k-means clustering
+-   Divided each transcript into two groups (states) via k-means clustering
 
-\* Only transcripts with at least 6 samples in each state should are continued with
+<!-- -->
 
-\* having a state-average fold change larger than 3
+-   Only transcripts with at least 6 samples in each state should are continued with
 
--   avg(max(state_averages)) / average(min(state_averages)) \> 3
+<!-- -->
+
+-   having a state-average fold change larger than 3
+
+<!-- -->
+
+-   avg(max(state_averages)) - average(min(state_averages)) \> 3
+-   split values into cluster 1 and cluster 2 for each transcript
+-   calculate test-t between values in each center for each transcript
+    -   keep only transcript with q \> 0.01
+-   Multiple gene transcript which meets requirements do either
+    -   Select lowest q values to represent the gene (like in the paper)
+    -   keep both ?
+-   Do fisher exact test (threshold 1026) across transcripts and keep only transcripts with similar patterns in the two states with at least 6 other transcripts
+
+```{r}
+my_tibble <- tibble(
+  Group = rep(c("A", "B"), each = 3),
+  Value1 = c(10, 15, 20, 25, 30, 35),
+  Value2 = c(5, 10, 15, 20, 25, 30)
+)
+```
