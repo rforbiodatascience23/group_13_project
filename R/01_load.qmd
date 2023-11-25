@@ -19,7 +19,7 @@ library("readxl")
 
 ```{r}
 # Load metadata from sheet 1
-meta_data < read_excel(
+meta_data <- read_excel(
   here("data/_raw/raw_data.xlsx"),
   sheet = "Suppl_Table1",
   skip = 3,
@@ -37,7 +37,7 @@ expr_data <- read_excel(
 
 ## Combine the metadata and expression sheets from the excel table
 
-First we will need to transpose the RNA-seq gene expression dataframe before joining it with the meta data. 
+First we will need to transpose the RNA-seq gene expression dataframe before joining it with the meta data.
 
 ```{r}
 # Check if there are duplicated transcripts (refseq)
@@ -47,7 +47,9 @@ expr_data |>
   summarise(n = n()) |>
   arrange(desc(n))
 ```
+
 We see that there are no duplicated transcript refseq. We are good to go.
+
 ```{r}
 # Concatenate gene and refseq colums to have one unique transcript ID not to lose information about gene ID
 expr_data_conc <- expr_data |>
@@ -57,6 +59,7 @@ expr_data_conc <- expr_data |>
    remove = TRUE, 
    na.rm = FALSE)
 ```
+
 ```{r}
 
 # We then need to transpose the expression dataframe
