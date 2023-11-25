@@ -11,6 +11,7 @@ editor: visual
 
 ```{r}
 library("tidyverse")
+library("broom")
 library("here")
 library("readxl")
 library("cowplot")
@@ -31,8 +32,8 @@ data <- read_tsv(here("data/03_dat_augment.tsv"))
 
 ```{r}
 input_pca <- data |>
-  select(-c(1:32)) |>
-  select(-c(cor_index))
+  select(-c(1:32)) #|>
+  #select(-c(cor_index))
 
 
 pca_fit <- log2(input_pca + 1) |>
@@ -51,12 +52,60 @@ pca_plot_axes_labels <- pca_fit |>
   mutate(
     lbl = str_c("PC", PC, ", Variance = ", 
                  round(percent*100,2),
-                 "%")
-    ) |> 
+                 "%")) |> 
   pull("lbl")
 ```
 
 ### Ploting
+
+```{r}
+pca_meta_data <- function(to_plot) {
+   # PCA for hc clusts
+plot_pca_ethnicity <- pca_fit |>
+  augment(data) |> 
+  filter(!is.na(survival)) |>
+  ggplot(
+    aes(
+      x = .fittedPC1,
+      y = .fittedPC2, 
+      #shape = factor(hc_cluster)
+      #label = hc_cluster,
+      )) + 
+  geom_point(aes_string(
+    #shape = hc_cluster,
+      #shape = factor(hc_cluster),
+      color =   "to_plot"  ),
+    size = 3,) +
+    #size = 3,
+    #shape = hc_cluster) +
+    #shape = 21) +
+  theme_half_open(12) +
+  background_grid()+
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = "PCA: Paitiens clusters by Trancriptpics",
+    x = pluck(pca_plot_axes_labels, 1),
+    y = pluck(pca_plot_axes_labels, 2),
+    shape = "Pantient HC",
+    fill = "Survival Category",
+    caption = "Data from doi.org/10.1038/s42003-021-01842-7")+
+  theme(plot.caption.position = "plot")
+ plot_pca_ethnicity
+}
+
+```
+
+### plot all
+
+```{r}
+
+
+
+for (x in colnames(data[1:32])) {
+  pca_meta_data(x)
+}
+```
 
 ```{r}
 
@@ -320,115 +369,6 @@ pca_fit |>
   theme_minimal_grid(12)
 ```
 
-## tempcode
-
-```{r}
-
-pca_fit |>
-  tidy("pcs") |> 
-  mutate(percent = percent * 100) |> 
-  ggplot(aes(x = PC,
-             y = percent)) +
-  geom_hline(yintercept = 0) +
-  geom_col(colour = "black",
-           alpha = 0.5) +
-  theme_bw(base_size = 20) +
-  theme(panel.grid.minor.x = element_blank(),
-        panel.grid.major.x = element_blank()) +
-  labs(title = "Scree Plot of PCA of BLOSUM62")
-
-
-bl62_pca_aug <- bl62_pca |>
-  augment(bl62)
-bl62_pca_aug
-
-
-pca_plot_axes_labels <- bl62_pca |>
-  tidy("eigenvalues") |>
-  mutate(lbl = str_c("PC", PC, ", VE = ", round(percent*100,2), "%")) |> 
-  pull("lbl")
-pca_plot_axes_labels
-
-pca_plot_axes_labels <- bl62_pca |>
-  tidy("eigenvalues") |>
-  mutate(lbl = str_c("PC", PC, ", VE = ", round(percent*100,2), "%")) |> 
-  pull("lbl")
-pca_plot_axes_labels
-
-
-pca_plot <- bl62_pca_aug |> 
-  ggplot(aes(x = .fittedPC1,
-             y = .fittedPC2,
-
-             
-             label = aa,
-             colour = chem_class,
-             fill = chem_class)) +
-  geom_vline(xintercept = 0) +
-  geom_hline(yintercept = 0) +
-  geom_point(shape = 21,
-             size = 6,
-             alpha = 0.5) +
-  geom_text(colour = "black") +
-  scale_fill_manual(
-    values = c("red", "blue", "black",
-               "purple", "green", "yellow")) +
-  scale_colour_manual(
-    values = c("red", "blue", "black",
-               "purple", "green", "yellow")) +
-  coord_fixed() +
-  theme_bw(base_size = 20,
-           base_family = "avenir") +
-  labs(
-    title = "PCA: Scores Plot of BLOSUM62",
-    x = pluck(pca_plot_axes_labels, 1),
-    y = pluck(pca_plot_axes_labels, 2),
-    fill = "Chemistry",
-    colour = "Chemistry",
-    caption = "Up: Aromatic, down: Aliphatic, Left: Charged, Right: Hydrophobic")
-```
-
-## Feature selection
-
-```{r}
-# Load data
-data <- read_tsv(here("data/03_dat_augment.tsv"))
-library("tidyverse")
-library("here")
-library("readxl")
-library("tidyclust")
-library("tidymodels")
-library("corrr")
-library("caret")
-library("cowplot")
-```
-
-```{r}
-# Look at only gene data
-features_to_select <- data |>
-  select(-c(1:32))
-features_to_select_none_na <- features_to_select |> 
-  select_if(
-    ~ !any(is.na(.))
-    ) |>
-  select_if(
-    is.numeric)
-
-# Set diagoanl to 1 so findCorrelations can work
-feature_cor <- features_to_select |>
-  correlate(diagonal = 1)
-
-cor_index <- feature_cor |>
-  select(-c(1)) |>
-  findCorrelation(
-    cutoff = 0.95
-  )
-
-
-
-
-```
-
 ## Plots of clusters
 
 ```{r}
@@ -468,6 +408,108 @@ trancrip_to_plot <- pca_fit |>
 
 trancrip_to_plot|>
   violen_plot()
+
+```
+
+```{r}
+trancrip_to_plot <- pca_fit |>
+  tidy(matrix = "rotation") |>
+  pivot_wider(names_from = "PC", names_prefix = "PC", values_from = "value") |>
+  arrange(desc(PC1))|>
+  select(column)|>
+  slice(1:5)|>
+  pull()
+
+mean_data_pca1 <- data |>
+  group_by(hc_cluster)|>
+  select(trancrip_to_plot)|>
+  summarise(mean_POU2F3_NM_014352 = mean(POU2F3_NM_014352),
+            mean_C11orf53_NM_198498 = mean(C11orf53_NM_198498),
+            mean_GFI1B_NM_004188 = mean(GFI1B_NM_004188),
+            mean_POU2F3_NM_001244682 = mean(POU2F3_NM_001244682),
+            mean_PNOC_NM_006228 = mean(PNOC_NM_006228))
+
+mean_data_pca1
+
+
+```
+
+### Explore the clusters
+
+#### Cluster with point plot
+
+```{r}
+
+trancrip_to_plot <- pca_fit |>
+  tidy(matrix = "rotation") |>
+  pivot_wider(names_from = "PC", names_prefix = "PC", values_from = "value") |>
+  arrange(desc(PC2))|>
+  select(column)|>
+  slice(1:5)|>
+  pull()
+
+mean_data_pca2 <- data |>
+  group_by(hc_cluster)|>
+  summarise(mean_GNG8_NM_033258 = mean(GNG8_NM_033258),
+            mean_NHLH1_NM_005598 = mean(NHLH1_NM_005598),
+            mean_PALM_NM_001040134 = mean(PALM_NM_001040134),
+            mean_KCNQ2_NM_172109 = mean(KCNQ2_NM_172109),
+            mean_NPTX2_NM_002523 = mean(NPTX2_NM_002523))|>
+    pivot_longer(
+    cols = -hc_cluster,
+    names_to = "trancrips",
+    values_to = "expression"
+  )
+
+ggplot(
+  mean_data_pca2, 
+       aes(
+         hc_cluster,
+         expression,
+         group = trancrips)) +
+  geom_point(
+    aes(
+      color = trancrips ))+
+  geom_line(
+    aes(
+      color = trancrips
+    ))
+
+```
+
+#### Clusters in boxplot by DET
+
+```{r}
+
+trancrip_to_plot <- pca_fit |>
+  tidy(matrix = "rotation") |>
+  pivot_wider(names_from = "PC", names_prefix = "PC", values_from = "value") |>
+  arrange(desc(PC1))|>
+  select(column)|>
+  slice(1:5)|>
+  pull()
+
+mean_data_pca2 <- data |>
+  group_by(hc_cluster)|>
+  select(trancrip_to_plot)|>
+    pivot_longer(
+    cols = -hc_cluster,
+    names_to = "trancrips",
+    values_to = "expression"
+  )
+
+
+ggplot(
+  mean_data_pca2, 
+       aes(
+         hc_cluster,
+         expression,
+         fill = trancrips,
+         dodge = trancrips)) +
+  stat_boxplot(
+    geom ='errorbar')+
+  geom_boxplot()
+mean_data_pca2
 ```
 
 ```{r}
@@ -479,6 +521,11 @@ trancrip_to_plot <- pca_fit |>
   select(column)|>
   slice(1)|>
   pull()
+
+mean_data <- data |>
+  group_by(hc_cluster)|>
+  summarise(mean(trancrip_to_plot))
+  
 
 ggplot(data,aes_string(
     x = "hc_cluster",
