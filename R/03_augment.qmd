@@ -18,25 +18,31 @@ library("tidymodels")
 source(here("R/99_proj_func.R"))
 ```
 
-## Load data
+## Set seed for reproducibility
+
+```{r}
+set.seed(1337)
+```
+
+## Load clean data
 
 ```{r}
 # Load data
-data <- read_tsv(here("data/02_dat_clean.tsv"))
+data_clean <- read_tsv(here("data/02_dat_clean.tsv"))
 ```
 
-## Add catagorial features from data
+# Add categorical progression
 
-### Add catagorial progresstion
+Add columns of progression as categorical from a continues variable
 
-Add colums of progression as catagorical from a contiunes variable
+## Add categorical survival status
 
 ```{r}
 # adds cataorical colum surviral based on how many months a person survived.
-# adds after meta data colums to keep structor of meta - gene data
-data <- data |>
+# adds after meta data colums to keep structure of meta - gene data
+data_survival <- data_clean |>
   mutate(
-    survival = case_when(
+    survival_time = case_when(
       overall_survival_months < 6 ~ "Terrible",
       overall_survival_months < 12 ~ "Bad",
       overall_survival_months < 36 ~ "Decent",
@@ -46,7 +52,19 @@ data <- data |>
     .after = overall_survival_months
   )
 
-data <- data |> 
+# Make the survival status in boolean format
+data_survival_bool <- data_survival |>
+  mutate(
+    survival_status = case_when(
+      status_at_time_of_last_follow_up == "dead" ~ 0,
+      status_at_time_of_last_follow_up == "alive" ~ 1
+    ),
+    .after = status_at_time_of_last_follow_up
+  )
+```
+
+```{r}
+data_treatment <- data_survival_bool |> 
   mutate(
     treatment_group = case_when(
       is.na(chemotherapy_neo_adjuvant_yes_no) | is.na(chemotherapy_yes_no) | is.na(radiation_yes_no) ~ "Data Missing",
@@ -57,228 +75,15 @@ data <- data |>
       chemotherapy_neo_adjuvant_yes_no == "no" & chemotherapy_yes_no == "no" & radiation_yes_no == "yes" ~ "Radiation Only",
       chemotherapy_neo_adjuvant_yes_no == "no" & chemotherapy_yes_no == "no" & radiation_yes_no == "no" ~ "No treatment",
       TRUE ~ "Other Combinations"
-    )
-  )
-
-# View changes
-data |>
-  select(overall_survival_months, survival)
-```
-
-### Add categorical survival status
-
-```{r}
-# Make the survival status variable numeric
-data <- data |>
-  mutate(
-    survival_status = case_when(
-      status_at_time_of_last_follow_up == "dead" ~ 0,
-      status_at_time_of_last_follow_up == "alive" ~ 1
     ),
-    .after = status_at_time_of_last_follow_up
+    .after = survival_status
   )
 
 # View changes
-data |>
-  select(status_at_time_of_last_follow_up, survival_status)
-```
-
-## Feature selection
-
-### Get expression data from all data
-
-```{r}
-# Find sample id and trancript express
-expression_data <- data |> 
-  select(1, 32:ncol(data))
-```
-
-### Log transform expression data with log2(1 + FPKM)
-
-```{r}
-log_row <- function(row_values, pseudo_count = 0) {
-  log2(pseudo_count + row_values)
-}
-
-expr_log <- expression_data |>
-  group_by(sample_id) |>
-  nest() |>
-  mutate(data = map(.x = data,
-                    .f = ~log_row(row_values = .x,
-                                  pseudo_count = 1))) |>
-  unnest(data) |>
-  ungroup()
-```
-
-### Transpose data to have transcript per row
-
-```{r}
-expr_log_trans <- expr_log |>
-  group_by(sample_id) |>
-  pivot_longer(-sample_id,
-              names_to = "transcript_id") |>
-  pivot_wider(names_from = sample_id,
-   values_from = value) |>
-  ungroup()
-```
-
-### Filter away transcripts with only zeros
-
-```{r}
-expr_log_trans_no_zero <- expr_log_trans |>
-  filter(!if_all(starts_with("S"), ~ . == 0))
-```
-
-### Perform k-means clustering for each transcript expression data
-
-```{r}
-# Function to perform k-means clustering on a single row
-cluster_row <- function(row, k) {
-  row_data <- row
-  cluster_result <- kmeans(row_data, centers = k, algorithm = "Lloyd")
-  return(list(cluster = cluster_result$cluster, centers = cluster_result$centers))
-}
-
-# Clustering the expression levels for each transcript
-# into two groups (low and high expression)
-cluster_data <- expr_log_trans_no_zero |>
-  group_by(transcript_id) |>
-  nest() |>
-  ungroup() |>
-  mutate(cluster_data = map(.x = data,
-                           ~cluster_row(unlist(.x), k=2)))
-
-cluster_tidy <- cluster_data |>
-  mutate(cluster = map(cluster_data, "cluster"),
-         centers = map(cluster_data, "centers")) |>
-  unnest_wider(cluster) |>
-  unnest_wider(centers) |>
-  select(-c(data, cluster_data)) |>
-  rename(cluster_1 = '1',
-         cluster_2 = '2')
-```
-
-### Find which transcripts have at least 6 expression values in each cluster
-
-```{r}
-# Select transcripts with a state fold change of > 3
-fold_change <- function(val_1, val_2){
-  fold_change <- max(val_1, val_2) - min(val_1, val_2)
-  return(fold_change)
-}
-
-above_state_fold <- cluster_tidy |>
-  mutate(fold_change = map2(.x = cluster_1,
-                            .y = cluster_2,
-                            .f = ~fold_change(val_1 = .x,
-                                              val_2 = .y))) |>
-  filter(!fold_change == Inf) |>
-  filter(fold_change > 3)
-
-# Pivot longer for grouping by transcripts and cluster groupings
-above_state_fold_long <- above_state_fold |>
-  pivot_longer(cols = starts_with("S"),
-               names_to = "sample_id",
-               values_to = "cluster_int")
-
-
-# Count number of expression values in each cluster
-# for all transcripts and select transcript with with
-# more than 6 in each group
-selected_transcripts <- above_state_fold_long |>
-  group_by(transcript_id) |>
-  summarise(n_c1 = sum(case_when(cluster_int == 1 ~ 1,
-                                TRUE ~ 0)),
-            n_c2 = sum(case_when(cluster_int == 2 ~ 1,
-                                 TRUE ~ 0))) |> 
-  filter(n_c1 >= 6 & n_c2 >= 6) |>
-  pull(transcript_id)
-```
-
-### Save selected transcripts expression data to csv
-
-```{r}
-selected_transcript_expr <- expr_log_trans |>
-  filter(transcript_id %in% selected_transcripts)
-
-
-```
-
-### save transcript express
-
-```{r}
-selected_transcript_expr |>
-  write_tsv(here("data/06_selected_transcript_expr.tsv"))
-```
-
-### save transcript express
-
-```{r}
-selected_transcript_expr |>
-  write_tsv(here("data/06_selected_transcript_expr.tsv"))
-```
-
-### Join meta data
-
-```{r}
-# Transpose trancript to samples on rows
-transposed_trancripts <- selected_transcript_expr|>
-  pivot_longer(-transcript_id,
-   names_to = "sample_id") |>
-  pivot_wider(names_from = transcript_id,
-   values_from = value)
-```
-
-```{r}
-
-meta_data_seleted_trancripts <- data |>
-  select(c(1:31)) |>
-  left_join(transposed_trancripts,
-            by = join_by(sample_id))
-
-```
-
-## Add Clusters to samples
-
-Perform clustering of the gene/trancripts express to see which samples might be form a subtype of cancer. The clustering will be performed using the tidyclust packages.
-
-```{r}
-# First define how to cluster
-# num_cluster are the numbers of clsuters to be formed
-# Linage_mehtod is which method the formations of clusted should be based on.
-hc_data <- meta_data_seleted_trancripts |>
-  select(-c(1:31))
-
-hc_spec <- hier_clust(
-  num_clusters = 4,
-  linkage_method = "ward.D"
-)
-
-
-# sub set data for computing
-hc_data <- log2(hc_data+1) 
-
-
-hc_spec_fit <- hc_spec |>
-  fit(~., data = hc_data)
-
-# hc_spec_fit$fit |> plot()
-
-assigned_clusteres <- extract_cluster_assignment(hc_spec_fit) |>
-  pluck(".cluster")
-
-length(which(assigned_clusteres == "Cluster_1"))
-
-
-# add cluster asignment after last colum of meta data
-data <- meta_data_seleted_trancripts |>
-  mutate(
-    hc_cluster = assigned_clusteres,
-    .after = survival
-  )
-
-
-
+data_treatment |>
+  select(survival_time,
+         survival_status,
+         treatment_group)
 ```
 
 ## Save augmented data
@@ -286,7 +91,275 @@ data <- meta_data_seleted_trancripts |>
 ```{r}
 # Save as .tsv file
 write_tsv(
-  data,
-  here("data/03_dat_augment.tsv")
+  data_treatment,
+  here("data/03_dat_all_augment.tsv")
 )
+```
+
+# Create a subset of relevant transcripts
+
+We want to create a subset of transcripts that have a low-high expression signature across samples. To find transcripts with low-high expression signature, we perform a kmeans clustering on each transcripts expression data, clustering the expression values into two states. The low-high expression signature transcripts are selected based the following requirements from the cluster states.
+
+-   Only transcripts with at least 6 samples in each state should are continued with
+-   Transcripts are required to have a state-average fold change larger than 3 between the two states
+-   Perform test-t between values in each state, do false discovery rate correction and keep only transcript with q \> 0.01
+
+## Get expression data from all data
+
+```{r}
+expression_data <- data_treatment |> 
+  select(1, 33:ncol(data_treatment))
+
+# Print expression_data
+expression_data
+```
+
+## Log transform and transpose data to have transcript per row
+
+```{r}
+expr_log_trans <- expression_data |>
+  group_by(sample_id) |>
+  pivot_longer(-sample_id,
+              names_to = "transcript_id",
+              values_to = "expression_value") |>
+  mutate(expression_value = log2(1 + expression_value)) |>
+  pivot_wider(names_from = sample_id,
+              values_from = expression_value) |>
+  ungroup()
+
+expr_log_trans
+```
+
+## Filter away transcripts with only zeros
+
+```{r}
+expr_trans_no_zero <- expr_log_trans |>
+  filter(!if_all(starts_with("S"), ~ . == 0))
+```
+
+## Kmeans clustering on each transcript
+
+For each individual transcript we split the expression values into two states, which should correspond to a high and low expression state.
+
+```{r}
+# Clustering function that clust
+kmeans_cluster_row <- function(transcript_expr_data) {
+  # Transpose tibble to fit into the kmeans function
+  transposed_tibble <- transcript_expr_data |>
+    pivot_longer(cols = everything(),
+                 names_to = "sample_id")
+  
+  # Clustering
+  cl <- transposed_tibble |>
+    select(value) |>
+    kmeans(centers=2)
+  
+  # Chain clustering states to each expression value
+  cluster_tibble <- transposed_tibble |>
+    mutate(cluster_int = cl$cluster) |>
+    pivot_wider(names_from = sample_id,
+                values_from = value)
+  
+  return(cluster_tibble)
+}
+
+# Perform kmeans clustering on each transcript
+clust_data <- expr_trans_no_zero |>
+  group_by(transcript_id) |>
+  nest() |>
+  mutate(data = map(.x = data, 
+                    .f = ~kmeans_cluster_row(.x))) |>
+  unnest(data) |>
+  ungroup()
+
+# Go to long format
+clust_data_long <- clust_data |>
+  pivot_longer(cols=-c(transcript_id, cluster_int),
+               names_to = 'sample_id',
+               values_to = 'expression_value') |>
+  drop_na()
+
+clust_data_long
+```
+
+## Select transcripts according to requirements
+
+```{r}
+# Average expression fold change check
+fold_change <- function(val_1, val_2){
+  fold_change <- max(val_1, val_2) - min(val_1, val_2)
+  return(fold_change)
+}
+
+avg_fold_change <- clust_data_long |>
+  group_by(transcript_id, cluster_int) |>
+  summarize(avg_expression = mean(expression_value)) |>
+  ungroup(cluster_int) |>
+  pivot_wider(names_from = cluster_int,
+              values_from = avg_expression) |>
+  rename(cluster_1_avg_expr = '1',
+         cluster_2_avg_expr = '2') |>
+  mutate(fold_change = map2(.x = cluster_1_avg_expr,
+                            .y = cluster_2_avg_expr,
+                            .f = ~fold_change(val_1 = .x,
+                                              val_2 = .y))) |>
+  ungroup()
+
+# Save a list of transcript following 
+# average expression fold change > 3
+above_fold_change_threshold <- avg_fold_change |>
+  filter(!fold_change == Inf) |>
+  filter(fold_change > 3) |>
+  pull(transcript_id)
+
+
+# 6 expression values in each state check
+count_clusters <- clust_data_long |>
+  filter(transcript_id %in% above_fold_change_threshold) |>
+  group_by(transcript_id) |>
+  summarize(cluster1_n = sum(cluster_int == 1),
+            cluster2_n = sum(cluster_int == 2)) |>
+  ungroup()
+
+# Save a list of transcript ids which have 6 or more
+# expression values in each state
+more_than_6_in_each_cluster <- count_clusters |>
+  filter(cluster1_n >= 6 & cluster2_n >= 6) |>
+  pull(transcript_id)
+
+# Perform t-test and calculate false discovery rate q-values
+clust_data_long_test <- clust_data_long |>
+  filter(transcript_id %in% more_than_6_in_each_cluster) |>
+  group_by(transcript_id) |>
+  summarize(p_value = t.test(expression_value ~ cluster_int)$p.value) |>
+  mutate(q_value = p.adjust(p_value, method = "BH"))
+
+# Save a list of 
+below_q_value <- clust_data_long_test |>
+  filter(q_value < 0.01) |>
+  pull(transcript_id)
+
+selected_transcripts <- below_q_value
+```
+
+## Find genes with multiple transcripts (?)
+
+```{r}
+#| eval: false
+#| echo: false
+# check how many genes
+selected_transcript_expr_split <- selected_transcript_expr |>
+  separate(transcript_id, into = c("gene", "id"), sep = "_", extra="merge")
+
+selected_transcript_expr_split |>
+  group_by(gene) |>
+  summarise(n = n()) |>
+  arrange(desc(n))
+```
+
+## Fishers exact test (?)
+
+```{r}
+#| eval: false
+#| echo: false
+#clust_data_long |>
+#  filter(transcript_id %in% below_q_value) |>
+#  head(486) |>
+#  select(-sample_id) |>
+#  group_by(transcript_id) |>
+#  summarise(n=n())
+#
+#clust_data_long |>
+#  filter(transcript_id %in% below_q_value) |>
+#  head(486) |>
+#  select(-sample_id) |>
+#  mutate(cluster_int = as.character(cluster_int)) |>
+#  group_by(transcript_id) |>
+#    summarise(
+#    p_value = fisher.test(table(expression_value, cluster_int))$p.value
+#  )
+
+### Example of how to run with smaller data
+# Reshape data for easier analysis
+gene_data_long <- gene_data %>%
+  pivot_longer(cols = -Group, names_to = "Gene", values_to = "Expression")
+
+gene_data_long
+
+# Perform Fisher's exact test for each gene
+fisher_results <- gene_data_long |>
+  group_by(Gene) |>
+  summarise(
+    p_value = fisher.test(table(Expression, Group))$p.value
+  )
+
+# Print the results
+fisher_results
+
+# Visualize the results
+fisher_results %>%
+  ggplot(aes(x = Gene, y = -log10(p_value))) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Fisher's Exact Test for Gene Expression",
+       x = "Gene",
+       y = "-log10(p-value)")
+```
+
+## Pivot to sample per row
+
+```{r}
+selected_transcript_expr <- expr_log_trans |>
+  filter(transcript_id %in% selected_transcripts)
+
+selected_transcript_sample_row <- selected_transcript_expr |>
+  pivot_longer(cols = -transcript_id,
+               names_to = "sample_id",
+               values_to = "expression_value") |>
+  pivot_wider(names_from = transcript_id,
+              values_from = expression_value)
+```
+
+## Clustering of sample ids via hierarchical clustering
+
+Perform clustering of the gene/transcripts express to see which samples might form a subtype of cancer. The clustering will be performed using the tidyclust packages.
+
+```{r}
+# First define how to cluster
+# num_cluster are the numbers of clsuters to be formed
+# Linage_mehtod is which method the formations of clusted should be based on.
+hc_data <- selected_transcript_sample_row
+
+hc_spec <- hier_clust(
+  num_clusters = 4,
+  linkage_method = "ward.D"
+)
+
+hc_spec_fit <- hc_spec |>
+  fit(~., data = hc_data)
+
+assigned_clusters <- extract_cluster_assignment(hc_spec_fit) |>
+  pluck(".cluster")
+
+assigned_clusters |>
+  as_tibble()
+```
+
+## Save selected transcripts expression data to csv
+
+We write a tsv with all metadata for sample ids, but only keep selected transcripts.
+
+The expression values are not log-transformed, since this could be done differently in the analysis.
+
+Along with this we also save the hierarchical clustering amongst the sample ids.
+
+```{r}
+select_transcript_meta <- data_treatment |>
+  select(c(1:32, selected_transcripts)) |>
+  mutate(
+    sample_cluster = assigned_clusters,
+    .after = survival_time
+  )
+
+select_transcript_meta |>
+  write_tsv(here("data/03_dat_selected_transcript_augment.tsv"))
 ```

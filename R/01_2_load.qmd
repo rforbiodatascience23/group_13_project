@@ -1,5 +1,5 @@
 ---
-title: "01 - Loading data"
+title: "01 - Loading data v2"
 subtitle: "R for Bio Data Science"
 format: html
 author: El Mehdi Baknine (s194533)
@@ -19,7 +19,7 @@ library("readxl")
 
 ```{r}
 # Load metadata from sheet 1
-meta_data < read_excel(
+meta_data <- read_excel(
   here("data/_raw/raw_data.xlsx"),
   sheet = "Suppl_Table1",
   skip = 3,
@@ -37,7 +37,7 @@ expr_data <- read_excel(
 
 ## Combine the metadata and expression sheets from the excel table
 
-First we will need to transpose the RNA-seq gene expression dataframe before joining it with the meta data.
+First we will need to transpose the RNA-seq gene expression dataframe before joining it with the meta data. We
 
 ```{r}
 # Check if there are duplicated transcripts (refseq)
@@ -90,7 +90,13 @@ We see that the samples that are not possible to join are for samples where the 
 # Inner join the data
 all_data <- meta_data |>
   inner_join(expr_data_conc_trans, 
-   by = join_by(`Sample-ID` == sample_id))
+             by = join_by(`Sample-ID` == sample_id)) |>
+  rename("Sample_id" = `Sample-ID`)
+```
+
+```{r}
+# Save transcript data seperately
+write_tsv(expr_data_conc_trans, here("data/transcript.tsv"))
 ```
 
 ## Save the combined data
@@ -98,5 +104,5 @@ all_data <- meta_data |>
 ```{r}
 # Save in data directory, as .tsv file
 write_tsv(all_data,
- here("data/01_dat_load.tsv"))
+ here("data/01_2_dat_load.tsv"))
 ```
