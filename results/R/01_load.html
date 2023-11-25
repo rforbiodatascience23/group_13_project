@@ -6,10 +6,10 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="author" content="Mikkel Niklas Rasmussen (s193518)">
-<meta name="dcterms.date" content="2023-11-14">
+<meta name="author" content="All">
+<meta name="dcterms.date" content="2023-11-15">
 
-<title>02 - Cleaning data</title>
+<title>03 Augment data</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -59,16 +59,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="02_clean_files/libs/clipboard/clipboard.min.js"></script>
-<script src="02_clean_files/libs/quarto-html/quarto.js"></script>
-<script src="02_clean_files/libs/quarto-html/popper.min.js"></script>
-<script src="02_clean_files/libs/quarto-html/tippy.umd.min.js"></script>
-<script src="02_clean_files/libs/quarto-html/anchor.min.js"></script>
-<link href="02_clean_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="02_clean_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="02_clean_files/libs/bootstrap/bootstrap.min.js"></script>
-<link href="02_clean_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="02_clean_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="03_augment_files/libs/clipboard/clipboard.min.js"></script>
+<script src="03_augment_files/libs/quarto-html/quarto.js"></script>
+<script src="03_augment_files/libs/quarto-html/popper.min.js"></script>
+<script src="03_augment_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="03_augment_files/libs/quarto-html/anchor.min.js"></script>
+<link href="03_augment_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="03_augment_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="03_augment_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="03_augment_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="03_augment_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 
 
 </head>
@@ -81,7 +81,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">02 - Cleaning data</h1>
+<h1 class="title">03 Augment data</h1>
 <p class="subtitle lead">R for Bio Data Science</p>
 </div>
 
@@ -92,14 +92,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Author</div>
     <div class="quarto-title-meta-contents">
-             <p>Mikkel Niklas Rasmussen (s193518) </p>
+             <p>All </p>
           </div>
   </div>
     
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">November 14, 2023</p>
+      <p class="date">November 15, 2023</p>
     </div>
   </div>
   
@@ -130,130 +130,428 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <pre><code>here() starts at D:/RBio/group_13_project</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"readxl"</span>)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"R/99_proj_func.R"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"tidyclust"</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"tidymodels"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Attaching packages ────────────────────────────────────── tidymodels 1.1.1 ──
+✔ broom        1.0.5     ✔ rsample      1.2.0
+✔ dials        1.2.0     ✔ tune         1.1.2
+✔ infer        1.0.5     ✔ workflows    1.1.3
+✔ modeldata    1.2.0     ✔ workflowsets 1.0.1
+✔ parsnip      1.1.1     ✔ yardstick    1.2.0
+✔ recipes      1.0.8     
+── Conflicts ───────────────────────────────────────── tidymodels_conflicts() ──
+✖ scales::discard()           masks purrr::discard()
+✖ dplyr::filter()             masks stats::filter()
+✖ recipes::fixed()            masks stringr::fixed()
+✖ parsnip::knit_engine_docs() masks tidyclust::knit_engine_docs()
+✖ dplyr::lag()                masks stats::lag()
+✖ parsnip::list_md_problems() masks tidyclust::list_md_problems()
+✖ yardstick::spec()           masks readr::spec()
+✖ recipes::step()             masks stats::step()
+• Use suppressPackageStartupMessages() to eliminate package startup messages</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"R/99_proj_func.R"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="load-data" class="level2">
-<h2 class="anchored" data-anchor-id="load-data">Load data</h2>
+<section id="set-seed-for-reproducibility" class="level2">
+<h2 class="anchored" data-anchor-id="set-seed-for-reproducibility">Set seed for reproducibility</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load data</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(<span class="fu">here</span>(<span class="st">"data/01_dat_load.tsv"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1337</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="load-clean-data" class="level2">
+<h2 class="anchored" data-anchor-id="load-clean-data">Load clean data</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load data</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>data_clean <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(<span class="fu">here</span>(<span class="st">"data/02_dat_clean.tsv"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Rows: 81 Columns: 31669
 ── Column specification ────────────────────────────────────────────────────────
 Delimiter: "\t"
-chr    (26): Sample-ID, Normal, Tumor, SNP array 6.0 Affymetrix, RNA-seq, Wh...
-dbl (31643): age, progression-free_survival (months), overall_survival (mont...
+chr    (25): sample_id, normal, tumor, snp_array_6_0_affymetrix, rna_seq, wh...
+dbl (31644): age, smoking_history_pack_years, progression_free_survival_mont...
 
 ℹ Use `spec()` to retrieve the full column specification for this data.
 ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 </div>
 </div>
-<section id="rename-columns" class="level3">
-<h3 class="anchored" data-anchor-id="rename-columns">Rename columns</h3>
-<p>We will start by cleaning the column names, as there does not seem to be any sort of pattern in the naming scheme. We will use the <code>janitor::clean_names()</code> function for this task, which is used inside of the custom `clean_selected_names</p>
+</section>
+<section id="add-categorical-progression" class="level1">
+<h1>Add categorical progression</h1>
+<p>Add columns of progression as categorical from a continues variable</p>
+<section id="add-categorical-survival-status" class="level2">
+<h2 class="anchored" data-anchor-id="add-categorical-survival-status">Add categorical survival status</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Cleaning column names</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> data <span class="sc">|&gt;</span> <span class="fu">clean_selected_cols</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">29</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># adds cataorical colum surviral based on how many months a person survived.</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># adds after meta data colums to keep structure of meta - gene data</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>data_survival <span class="ot">&lt;-</span> data_clean <span class="sc">|&gt;</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">survival_time =</span> <span class="fu">case_when</span>(</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>      overall_survival_months <span class="sc">&lt;</span> <span class="dv">6</span> <span class="sc">~</span> <span class="st">"Terrible"</span>,</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>      overall_survival_months <span class="sc">&lt;</span> <span class="dv">12</span> <span class="sc">~</span> <span class="st">"Bad"</span>,</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>      overall_survival_months <span class="sc">&lt;</span> <span class="dv">36</span> <span class="sc">~</span> <span class="st">"Decent"</span>,</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>      overall_survival_months <span class="sc">&lt;</span> <span class="dv">60</span> <span class="sc">~</span> <span class="st">"Good"</span>,</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>      overall_survival_months <span class="sc">&gt;=</span> <span class="dv">60</span> <span class="sc">~</span> <span class="st">"Great"</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">.after =</span> overall_survival_months</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Make the survival status in boolean format</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>data_survival_bool <span class="ot">&lt;-</span> data_survival <span class="sc">|&gt;</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">survival_status =</span> <span class="fu">case_when</span>(</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>      status_at_time_of_last_follow_up <span class="sc">==</span> <span class="st">"dead"</span> <span class="sc">~</span> <span class="dv">0</span>,</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>      status_at_time_of_last_follow_up <span class="sc">==</span> <span class="st">"alive"</span> <span class="sc">~</span> <span class="dv">1</span></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">.after =</span> status_at_time_of_last_follow_up</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-</section>
-</section>
-<section id="check-of-nas-in-the-dataset" class="level2">
-<h2 class="anchored" data-anchor-id="check-of-nas-in-the-dataset">Check of NAs in the dataset</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>data <span class="sc">|&gt;</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">across</span>(<span class="fu">everything</span>(), <span class="sc">~</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(.)))</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="fu">everything</span>()) <span class="sc">|&gt;</span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(value <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="sc">|&gt;</span></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(value))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>data_treatment <span class="ot">&lt;-</span> data_survival_bool <span class="sc">|&gt;</span> </span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">treatment_group =</span> <span class="fu">case_when</span>(</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.na</span>(chemotherapy_neo_adjuvant_yes_no) <span class="sc">|</span> <span class="fu">is.na</span>(chemotherapy_yes_no) <span class="sc">|</span> <span class="fu">is.na</span>(radiation_yes_no) <span class="sc">~</span> <span class="st">"Data Missing"</span>,</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>      chemotherapy_neo_adjuvant_yes_no <span class="sc">==</span> <span class="st">"yes"</span> <span class="sc">&amp;</span> chemotherapy_yes_no <span class="sc">==</span> <span class="st">"yes"</span> <span class="sc">&amp;</span> radiation_yes_no <span class="sc">==</span> <span class="st">"yes"</span> <span class="sc">~</span> <span class="st">"All Treatments"</span>,</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>      chemotherapy_neo_adjuvant_yes_no <span class="sc">==</span> <span class="st">"yes"</span> <span class="sc">&amp;</span> chemotherapy_yes_no <span class="sc">==</span> <span class="st">"yes"</span> <span class="sc">&amp;</span> radiation_yes_no <span class="sc">==</span> <span class="st">"no"</span> <span class="sc">~</span> <span class="st">"Chemo with Neoadjuvants"</span>,</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>      chemotherapy_neo_adjuvant_yes_no <span class="sc">==</span> <span class="st">"no"</span> <span class="sc">&amp;</span> chemotherapy_yes_no <span class="sc">==</span> <span class="st">"yes"</span> <span class="sc">&amp;</span> radiation_yes_no <span class="sc">==</span> <span class="st">"yes"</span> <span class="sc">~</span> <span class="st">"Chemo and Radiation"</span>,</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>      chemotherapy_neo_adjuvant_yes_no <span class="sc">==</span> <span class="st">"no"</span> <span class="sc">&amp;</span> chemotherapy_yes_no <span class="sc">==</span> <span class="st">"yes"</span> <span class="sc">&amp;</span> radiation_yes_no <span class="sc">==</span> <span class="st">"no"</span> <span class="sc">~</span> <span class="st">"Chemo Only"</span>,</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>      chemotherapy_neo_adjuvant_yes_no <span class="sc">==</span> <span class="st">"no"</span> <span class="sc">&amp;</span> chemotherapy_yes_no <span class="sc">==</span> <span class="st">"no"</span> <span class="sc">&amp;</span> radiation_yes_no <span class="sc">==</span> <span class="st">"yes"</span> <span class="sc">~</span> <span class="st">"Radiation Only"</span>,</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>      chemotherapy_neo_adjuvant_yes_no <span class="sc">==</span> <span class="st">"no"</span> <span class="sc">&amp;</span> chemotherapy_yes_no <span class="sc">==</span> <span class="st">"no"</span> <span class="sc">&amp;</span> radiation_yes_no <span class="sc">==</span> <span class="st">"no"</span> <span class="sc">~</span> <span class="st">"No treatment"</span>,</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"Other Combinations"</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">.after =</span> survival_status</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a><span class="co"># View changes</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>data_treatment <span class="sc">|&gt;</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(survival_time,</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>         survival_status,</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>         treatment_group)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 15 × 2
-   name                             value
-   &lt;chr&gt;                            &lt;int&gt;
- 1 pathology_review_3                  80
- 2 progression_free_survival_months    48
- 3 ethnicity                           39
- 4 smoking_history_pack_years          28
- 5 radiation_yes_no                    16
- 6 chemotherapy_yes_no                 12
- 7 normal                               9
- 8 stage_t                              9
- 9 stage_n                              9
-10 stage_m                              9
-11 chemotherapy_neo_adjuvant_yes_no     5
-12 status_at_time_of_last_follow_up     4
-13 overall_survival_months              4
-14 smoking_status                       3
-15 stage_uicc                           2</code></pre>
+<pre><code># A tibble: 81 × 3
+   survival_time survival_status treatment_group    
+   &lt;chr&gt;                   &lt;dbl&gt; &lt;chr&gt;              
+ 1 Good                        0 Chemo and Radiation
+ 2 Decent                      0 Chemo Only         
+ 3 Good                        0 Chemo and Radiation
+ 4 Decent                      0 Data Missing       
+ 5 Decent                      0 Chemo and Radiation
+ 6 Decent                      0 Chemo and Radiation
+ 7 Great                       0 Chemo and Radiation
+ 8 Decent                      0 Chemo and Radiation
+ 9 Good                        1 Chemo and Radiation
+10 Great                       1 Chemo and Radiation
+# ℹ 71 more rows</code></pre>
 </div>
 </div>
-<p>We see that there are quite a few NAs in the meta data table. Specially, the age is missing for one of the samples. However, we might not need to use all of the these columns for analysis and visualizations, so we will leave them here for now. Comment : The missing age is from a sample that is not part of the 81 samples with RNA_seq</p>
 </section>
-<section id="check-whether-there-are-duplictes-of-the-sample-id" class="level2">
-<h2 class="anchored" data-anchor-id="check-whether-there-are-duplictes-of-the-sample-id">Check whether there are duplictes of the sample ID</h2>
+<section id="save-augmented-data" class="level2">
+<h2 class="anchored" data-anchor-id="save-augmented-data">Save augmented data</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check for duplicated sample IDs</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>data <span class="sc">|&gt;</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(sample_id) <span class="sc">|&gt;</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">n</span>() <span class="sc">&gt;</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Save as .tsv file</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_tsv</span>(</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  data_treatment,</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">here</span>(<span class="st">"data/03_dat_all_augment.tsv"</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="create-a-subset-of-relevant-transcripts" class="level1">
+<h1>Create a subset of relevant transcripts</h1>
+<p>We want to create a subset of transcripts that have a low-high expression signature across samples. To find transcripts with low-high expression signature, we perform a kmeans clustering on each transcripts expression data, clustering the expression values into two states. The low-high expression signature transcripts are selected based the following requirements from the cluster states.</p>
+<ul>
+<li>Only transcripts with at least 6 samples in each state should are continued with</li>
+<li>Transcripts are required to have a state-average fold change larger than 3 between the two states</li>
+<li>Perform test-t between values in each state, do false discovery rate correction and keep only transcript with q &gt; 0.01</li>
+</ul>
+<section id="get-expression-data-from-all-data" class="level2">
+<h2 class="anchored" data-anchor-id="get-expression-data-from-all-data">Get expression data from all data</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>expression_data <span class="ot">&lt;-</span> data_treatment <span class="sc">|&gt;</span> </span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="dv">1</span>, <span class="dv">33</span><span class="sc">:</span><span class="fu">ncol</span>(data_treatment))</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Print expression_data</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>expression_data</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 0 × 31,669
-# Groups:   sample_id [0]
-# ℹ 31,669 variables: sample_id &lt;chr&gt;, normal &lt;chr&gt;, tumor &lt;chr&gt;,
-#   snp_array_6_0_affymetrix &lt;chr&gt;, rna_seq &lt;chr&gt;,
-#   whole_genome_sequencing &lt;chr&gt;, whole_exome_sequencing &lt;chr&gt;,
-#   targeted_sequencing &lt;chr&gt;, pathology_review_1 &lt;chr&gt;,
-#   pathology_review_2 &lt;chr&gt;, pathology_review_3 &lt;chr&gt;, age &lt;dbl&gt;, sex &lt;chr&gt;,
-#   ethnicity &lt;chr&gt;, stage_t &lt;chr&gt;, stage_n &lt;chr&gt;, stage_m &lt;chr&gt;,
-#   stage_uicc &lt;chr&gt;, smoking_status &lt;chr&gt;, smoking_history_pack_years &lt;chr&gt;, …</code></pre>
+<pre><code># A tibble: 81 × 31,641
+   sample_id A1BG_NM_130786 A1CF_NM_014576 A1CF_NM_138932 A1CF_NM_138933
+   &lt;chr&gt;              &lt;dbl&gt;          &lt;dbl&gt;          &lt;dbl&gt;          &lt;dbl&gt;
+ 1 S00022             14.1         0.0104        0.000402       0       
+ 2 S00035              5.47        0.00510       0.000422       0       
+ 3 S00050              3.70        0.00279       0.000231       0       
+ 4 S00213              5.69        0.00199       0.000331       0.000002
+ 5 S00356              4.90        0             0              0       
+ 6 S00472              6.66        0             0              0       
+ 7 S00501              4.99        0             0              0       
+ 8 S00825              6.23        0             0              0       
+ 9 S00827              4.15        0.00241       0.0002         0       
+10 S00829              2.40        0.00190       0.000314       0.000002
+# ℹ 71 more rows
+# ℹ 31,636 more variables: A1CF_NM_001198818 &lt;dbl&gt;, A1CF_NM_001198820 &lt;dbl&gt;,
+#   A1CF_NM_001198819 &lt;dbl&gt;, A2LD1_NM_001195087 &lt;dbl&gt;, A2LD1_NM_033110 &lt;dbl&gt;,
+#   A2M_NM_000014 &lt;dbl&gt;, A2ML1_NM_144670 &lt;dbl&gt;, A4GALT_NM_017436 &lt;dbl&gt;,
+#   A4GNT_NM_016161 &lt;dbl&gt;, AAAS_NM_015665 &lt;dbl&gt;, AAAS_NM_001173466 &lt;dbl&gt;,
+#   AACS_NM_023928 &lt;dbl&gt;, AADAC_NM_001086 &lt;dbl&gt;, AADACL2_NM_207365 &lt;dbl&gt;,
+#   AADACL3_NM_001103169 &lt;dbl&gt;, AADACL3_NM_001103170 &lt;dbl&gt;, …</code></pre>
 </div>
 </div>
-<p>There are no duplicates</p>
 </section>
-<section id="clean-weird-variables" class="level2">
-<h2 class="anchored" data-anchor-id="clean-weird-variables">Clean weird variables</h2>
+<section id="log-transform-and-transpose-data-to-have-transcript-per-row" class="level2">
+<h2 class="anchored" data-anchor-id="log-transform-and-transpose-data-to-have-transcript-per-row">Log transform and transpose data to have transcript per row</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define columns containing paratheses in the value cells</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>cols_to_clean <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"snp_array_6_0_affymetrix"</span>,</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"rna_seq"</span>,</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"whole_genome_sequencing"</span>,</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"whole_exome_sequencing"</span>,</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"smoking_status"</span></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove references in parentheses in the these columns</span></span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> data <span class="sc">|&gt;</span></span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_at</span>(</span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    cols_to_clean,</span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    str_remove,</span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">pattern =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">s*</span><span class="sc">\\</span><span class="st">(.*</span><span class="sc">\\</span><span class="st">)"</span></span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> data <span class="sc">|&gt;</span> </span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">smoking_history_pack_years =</span> <span class="fu">case_when</span>(</span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>    smoking_history_pack_years <span class="sc">==</span> <span class="st">"10&gt;PY"</span> <span class="sc">~</span> <span class="dv">10</span>,</span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fu">as.numeric</span>(smoking_history_pack_years)</span>
-<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>  )) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>expr_log_trans <span class="ot">&lt;-</span> expression_data <span class="sc">|&gt;</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(sample_id) <span class="sc">|&gt;</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="sc">-</span>sample_id,</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>              <span class="at">names_to =</span> <span class="st">"transcript_id"</span>,</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>              <span class="at">values_to =</span> <span class="st">"expression_value"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">expression_value =</span> <span class="fu">log2</span>(<span class="dv">1</span> <span class="sc">+</span> expression_value)) <span class="sc">|&gt;</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> sample_id,</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>              <span class="at">values_from =</span> expression_value) <span class="sc">|&gt;</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>expr_log_trans</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 31,640 × 82
+   transcript_id      S00022  S00035  S00050  S00213 S00356 S00472 S00501 S00825
+   &lt;chr&gt;               &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
+ 1 A1BG_NM_130786    3.91e+0 2.69e+0 2.23e+0 2.74e+0  2.56    2.94  2.58   2.85 
+ 2 A1CF_NM_014576    1.49e-2 7.34e-3 4.01e-3 2.87e-3  0       0     0      0    
+ 3 A1CF_NM_138932    5.80e-4 6.09e-4 3.33e-4 4.77e-4  0       0     0      0    
+ 4 A1CF_NM_138933    0       0       0       2.89e-6  0       0     0      0    
+ 5 A1CF_NM_001198818 0       0       0       2.89e-6  0       0     0      0    
+ 6 A1CF_NM_001198820 0       0       0       0        0       0     0      0    
+ 7 A1CF_NM_001198819 0       0       0       0        0       0     0      0    
+ 8 A2LD1_NM_0011950… 8.98e-1 1.11e+0 1.21e+0 9.95e-1  1.25    1.03  1.82   1.78 
+ 9 A2LD1_NM_033110   5.33e-1 3.18e-1 3.75e+0 2.64e-1  0.122   1.20  0.777  0.557
+10 A2M_NM_000014     4.86e+0 5.35e+0 5.55e+0 6.45e+0  6.99    5.74  6.70   8.13 
+# ℹ 31,630 more rows
+# ℹ 73 more variables: S00827 &lt;dbl&gt;, S00829 &lt;dbl&gt;, S00830 &lt;dbl&gt;, S00831 &lt;dbl&gt;,
+#   S00832 &lt;dbl&gt;, S00836 &lt;dbl&gt;, S00837 &lt;dbl&gt;, S00838 &lt;dbl&gt;, S01242 &lt;dbl&gt;,
+#   S01248 &lt;dbl&gt;, S01297 &lt;dbl&gt;, S01366 &lt;dbl&gt;, S01453 &lt;dbl&gt;, S01494 &lt;dbl&gt;,
+#   S01512 &lt;dbl&gt;, S01524 &lt;dbl&gt;, S01542 &lt;dbl&gt;, S01556 &lt;dbl&gt;, S01563 &lt;dbl&gt;,
+#   S01578 &lt;dbl&gt;, S01698 &lt;dbl&gt;, S01728 &lt;dbl&gt;, S01792 &lt;dbl&gt;, S01861 &lt;dbl&gt;,
+#   S01864 &lt;dbl&gt;, S01873 &lt;dbl&gt;, S02065 &lt;dbl&gt;, S02093 &lt;dbl&gt;, S02120 &lt;dbl&gt;, …</code></pre>
+</div>
+</div>
+</section>
+<section id="filter-away-transcripts-with-only-zeros" class="level2">
+<h2 class="anchored" data-anchor-id="filter-away-transcripts-with-only-zeros">Filter away transcripts with only zeros</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>expr_trans_no_zero <span class="ot">&lt;-</span> expr_log_trans <span class="sc">|&gt;</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">if_all</span>(<span class="fu">starts_with</span>(<span class="st">"S"</span>), <span class="sc">~</span> . <span class="sc">==</span> <span class="dv">0</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="kmeans-clustering-on-each-transcript" class="level2">
+<h2 class="anchored" data-anchor-id="kmeans-clustering-on-each-transcript">Kmeans clustering on each transcript</h2>
+<p>For each individual transcript we split the expression values into two states, which should correspond to a high and low expression state.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Clustering function that clust</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>kmeans_cluster_row <span class="ot">&lt;-</span> <span class="cf">function</span>(transcript_expr_data) {</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Transpose tibble to fit into the kmeans function</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  transposed_tibble <span class="ot">&lt;-</span> transcript_expr_data <span class="sc">|&gt;</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">everything</span>(),</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">names_to =</span> <span class="st">"sample_id"</span>)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Clustering</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  cl <span class="ot">&lt;-</span> transposed_tibble <span class="sc">|&gt;</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(value) <span class="sc">|&gt;</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">kmeans</span>(<span class="at">centers=</span><span class="dv">2</span>)</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Chain clustering states to each expression value</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>  cluster_tibble <span class="ot">&lt;-</span> transposed_tibble <span class="sc">|&gt;</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">cluster_int =</span> cl<span class="sc">$</span>cluster) <span class="sc">|&gt;</span></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> sample_id,</span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>                <span class="at">values_from =</span> value)</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(cluster_tibble)</span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Perform kmeans clustering on each transcript</span></span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>clust_data <span class="ot">&lt;-</span> expr_trans_no_zero <span class="sc">|&gt;</span></span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(transcript_id) <span class="sc">|&gt;</span></span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nest</span>() <span class="sc">|&gt;</span></span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">data =</span> <span class="fu">map</span>(<span class="at">.x =</span> data, </span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a>                    <span class="at">.f =</span> <span class="sc">~</span><span class="fu">kmeans_cluster_row</span>(.x))) <span class="sc">|&gt;</span></span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(data) <span class="sc">|&gt;</span></span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Go to long format</span></span>
+<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a>clust_data_long <span class="ot">&lt;-</span> clust_data <span class="sc">|&gt;</span></span>
+<span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols=</span><span class="sc">-</span><span class="fu">c</span>(transcript_id, cluster_int),</span>
+<span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_to =</span> <span class="st">'sample_id'</span>,</span>
+<span id="cb20-35"><a href="#cb20-35" aria-hidden="true" tabindex="-1"></a>               <span class="at">values_to =</span> <span class="st">'expression_value'</span>) <span class="sc">|&gt;</span></span>
+<span id="cb20-36"><a href="#cb20-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>()</span>
+<span id="cb20-37"><a href="#cb20-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-38"><a href="#cb20-38" aria-hidden="true" tabindex="-1"></a>clust_data_long</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2,549,070 × 4
+   transcript_id  cluster_int sample_id expression_value
+   &lt;chr&gt;                &lt;int&gt; &lt;chr&gt;                &lt;dbl&gt;
+ 1 A1BG_NM_130786           2 S00022                3.91
+ 2 A1BG_NM_130786           2 S00035                2.69
+ 3 A1BG_NM_130786           2 S00050                2.23
+ 4 A1BG_NM_130786           2 S00213                2.74
+ 5 A1BG_NM_130786           2 S00356                2.56
+ 6 A1BG_NM_130786           2 S00472                2.94
+ 7 A1BG_NM_130786           2 S00501                2.58
+ 8 A1BG_NM_130786           2 S00825                2.85
+ 9 A1BG_NM_130786           2 S00827                2.36
+10 A1BG_NM_130786           2 S00830                2.62
+# ℹ 2,549,060 more rows</code></pre>
+</div>
+</div>
+</section>
+<section id="select-transcripts-according-to-requirements" class="level2">
+<h2 class="anchored" data-anchor-id="select-transcripts-according-to-requirements">Select transcripts according to requirements</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Average expression fold change check</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>fold_change <span class="ot">&lt;-</span> <span class="cf">function</span>(val_1, val_2){</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  fold_change <span class="ot">&lt;-</span> <span class="fu">max</span>(val_1, val_2) <span class="sc">-</span> <span class="fu">min</span>(val_1, val_2)</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(fold_change)</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>avg_fold_change <span class="ot">&lt;-</span> clust_data_long <span class="sc">|&gt;</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(transcript_id, cluster_int) <span class="sc">|&gt;</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">avg_expression =</span> <span class="fu">mean</span>(expression_value)) <span class="sc">|&gt;</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>(cluster_int) <span class="sc">|&gt;</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> cluster_int,</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>              <span class="at">values_from =</span> avg_expression) <span class="sc">|&gt;</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">cluster_1_avg_expr =</span> <span class="st">'1'</span>,</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>         <span class="at">cluster_2_avg_expr =</span> <span class="st">'2'</span>) <span class="sc">|&gt;</span></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">fold_change =</span> <span class="fu">map2</span>(<span class="at">.x =</span> cluster_1_avg_expr,</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>                            <span class="at">.y =</span> cluster_2_avg_expr,</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>                            <span class="at">.f =</span> <span class="sc">~</span><span class="fu">fold_change</span>(<span class="at">val_1 =</span> .x,</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>                                              <span class="at">val_2 =</span> .y))) <span class="sc">|&gt;</span></span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Warning: There was 1 warning in `mutate()`.
-ℹ In argument: `smoking_history_pack_years = case_when(...)`.
-Caused by warning:
-! NAs introduced by coercion</code></pre>
+<pre><code>`summarise()` has grouped output by 'transcript_id'. You can override using the
+`.groups` argument.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Save a list of transcript following </span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="co"># average expression fold change &gt; 3</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>above_fold_change_threshold <span class="ot">&lt;-</span> avg_fold_change <span class="sc">|&gt;</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>fold_change <span class="sc">==</span> <span class="cn">Inf</span>) <span class="sc">|&gt;</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(fold_change <span class="sc">&gt;</span> <span class="dv">3</span>) <span class="sc">|&gt;</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(transcript_id)</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="co"># 6 expression values in each state check</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>count_clusters <span class="ot">&lt;-</span> clust_data_long <span class="sc">|&gt;</span></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(transcript_id <span class="sc">%in%</span> above_fold_change_threshold) <span class="sc">|&gt;</span></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(transcript_id) <span class="sc">|&gt;</span></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">cluster1_n =</span> <span class="fu">sum</span>(cluster_int <span class="sc">==</span> <span class="dv">1</span>),</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>            <span class="at">cluster2_n =</span> <span class="fu">sum</span>(cluster_int <span class="sc">==</span> <span class="dv">2</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Save a list of transcript ids which have 6 or more</span></span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a><span class="co"># expression values in each state</span></span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a>more_than_6_in_each_cluster <span class="ot">&lt;-</span> count_clusters <span class="sc">|&gt;</span></span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(cluster1_n <span class="sc">&gt;=</span> <span class="dv">6</span> <span class="sc">&amp;</span> cluster2_n <span class="sc">&gt;=</span> <span class="dv">6</span>) <span class="sc">|&gt;</span></span>
+<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(transcript_id)</span>
+<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-23"><a href="#cb24-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Perform t-test and calculate false discovery rate q-values</span></span>
+<span id="cb24-24"><a href="#cb24-24" aria-hidden="true" tabindex="-1"></a>clust_data_long_test <span class="ot">&lt;-</span> clust_data_long <span class="sc">|&gt;</span></span>
+<span id="cb24-25"><a href="#cb24-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(transcript_id <span class="sc">%in%</span> more_than_6_in_each_cluster) <span class="sc">|&gt;</span></span>
+<span id="cb24-26"><a href="#cb24-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(transcript_id) <span class="sc">|&gt;</span></span>
+<span id="cb24-27"><a href="#cb24-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">p_value =</span> <span class="fu">t.test</span>(expression_value <span class="sc">~</span> cluster_int)<span class="sc">$</span>p.value) <span class="sc">|&gt;</span></span>
+<span id="cb24-28"><a href="#cb24-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">q_value =</span> <span class="fu">p.adjust</span>(p_value, <span class="at">method =</span> <span class="st">"BH"</span>))</span>
+<span id="cb24-29"><a href="#cb24-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-30"><a href="#cb24-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Save a list of </span></span>
+<span id="cb24-31"><a href="#cb24-31" aria-hidden="true" tabindex="-1"></a>below_q_value <span class="ot">&lt;-</span> clust_data_long_test <span class="sc">|&gt;</span></span>
+<span id="cb24-32"><a href="#cb24-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(q_value <span class="sc">&lt;</span> <span class="fl">0.01</span>) <span class="sc">|&gt;</span></span>
+<span id="cb24-33"><a href="#cb24-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(transcript_id)</span>
+<span id="cb24-34"><a href="#cb24-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-35"><a href="#cb24-35" aria-hidden="true" tabindex="-1"></a>selected_transcripts <span class="ot">&lt;-</span> below_q_value</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="find-genes-with-multiple-transcripts" class="level2">
+<h2 class="anchored" data-anchor-id="find-genes-with-multiple-transcripts">Find genes with multiple transcripts (?)</h2>
+</section>
+<section id="fishers-exact-test" class="level2">
+<h2 class="anchored" data-anchor-id="fishers-exact-test">Fishers exact test (?)</h2>
+</section>
+<section id="pivot-to-sample-per-row" class="level2">
+<h2 class="anchored" data-anchor-id="pivot-to-sample-per-row">Pivot to sample per row</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>selected_transcript_expr <span class="ot">&lt;-</span> expr_log_trans <span class="sc">|&gt;</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(transcript_id <span class="sc">%in%</span> selected_transcripts)</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>selected_transcript_sample_row <span class="ot">&lt;-</span> selected_transcript_expr <span class="sc">|&gt;</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="sc">-</span>transcript_id,</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_to =</span> <span class="st">"sample_id"</span>,</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>               <span class="at">values_to =</span> <span class="st">"expression_value"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> transcript_id,</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>              <span class="at">values_from =</span> expression_value)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="clustering-of-sample-ids-via-hierarchical-clustering" class="level2">
+<h2 class="anchored" data-anchor-id="clustering-of-sample-ids-via-hierarchical-clustering">Clustering of sample ids via hierarchical clustering</h2>
+<p>Perform clustering of the gene/transcripts express to see which samples might form a subtype of cancer. The clustering will be performed using the tidyclust packages.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># First define how to cluster</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="co"># num_cluster are the numbers of clsuters to be formed</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Linage_mehtod is which method the formations of clusted should be based on.</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>hc_data <span class="ot">&lt;-</span> selected_transcript_sample_row</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>hc_spec <span class="ot">&lt;-</span> <span class="fu">hier_clust</span>(</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">num_clusters =</span> <span class="dv">4</span>,</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">linkage_method =</span> <span class="st">"ward.D"</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>hc_spec_fit <span class="ot">&lt;-</span> hc_spec <span class="sc">|&gt;</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fit</span>(<span class="sc">~</span>., <span class="at">data =</span> hc_data)</span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>assigned_clusters <span class="ot">&lt;-</span> <span class="fu">extract_cluster_assignment</span>(hc_spec_fit) <span class="sc">|&gt;</span></span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pluck</span>(<span class="st">".cluster"</span>)</span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>assigned_clusters <span class="sc">|&gt;</span></span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_tibble</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 81 × 1
+   value    
+   &lt;fct&gt;    
+ 1 Cluster_1
+ 2 Cluster_2
+ 3 Cluster_1
+ 4 Cluster_3
+ 5 Cluster_3
+ 6 Cluster_3
+ 7 Cluster_3
+ 8 Cluster_3
+ 9 Cluster_1
+10 Cluster_4
+# ℹ 71 more rows</code></pre>
 </div>
 </div>
 </section>
-<section id="save-cleaned-data" class="level2">
-<h2 class="anchored" data-anchor-id="save-cleaned-data">Save cleaned data</h2>
+<section id="save-selected-transcripts-expression-data-to-csv" class="level2">
+<h2 class="anchored" data-anchor-id="save-selected-transcripts-expression-data-to-csv">Save selected transcripts expression data to csv</h2>
+<p>We write a tsv with all metadata for sample ids, but only keep selected transcripts.</p>
+<p>The expression values are not log-transformed, since this could be done differently in the analysis.</p>
+<p>Along with this we also save the hierarchical clustering amongst the sample ids.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Save as .tsv file</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_tsv</span>(</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  data,</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">here</span>(<span class="st">"data/02_dat_clean.tsv"</span>)</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>select_transcript_meta <span class="ot">&lt;-</span> data_treatment <span class="sc">|&gt;</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">32</span>, selected_transcripts)) <span class="sc">|&gt;</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">sample_cluster =</span> assigned_clusters,</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">.after =</span> survival_time</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Using an external vector in selections was deprecated in tidyselect 1.1.0.
+ℹ Please use `all_of()` or `any_of()` instead.
+  # Was:
+  data %&gt;% select(selected_transcripts)
+
+  # Now:
+  data %&gt;% select(all_of(selected_transcripts))
+
+See &lt;https://tidyselect.r-lib.org/reference/faq-external-vector.html&gt;.</code></pre>
 </div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>select_transcript_meta <span class="sc">|&gt;</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_tsv</span>(<span class="fu">here</span>(<span class="st">"data/03_dat_selected_transcript_augment.tsv"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
 </section>
 
 </main>
