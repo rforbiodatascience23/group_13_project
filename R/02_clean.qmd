@@ -34,7 +34,6 @@ data <- data |> clean_selected_cols(1:29)
 
 ## Check of NAs in the dataset
 
-
 ```{r}
 data |>
   summarise(
@@ -45,8 +44,7 @@ data |>
   arrange(desc(value))
 ```
 
-We see that there are quite a few NAs in the meta data table. Specially, the age is missing for one of the samples. However, we might not need to use all of the these columns for analysis and visualizations, so we will leave them here for now. 
-Comment : The missing age is from a sample that is not part of the 81 samples with RNA_seq
+We see that there are quite a few NAs in the meta data table. Specially, the age is missing for one of the samples. However, we might not need to use all of the these columns for analysis and visualizations, so we will leave them here for now. Comment : The missing age is from a sample that is not part of the 81 samples with RNA_seq
 
 ## Check whether there are duplictes of the sample ID
 
@@ -78,6 +76,12 @@ data <- data |>
     str_remove,
     pattern = "\\s*\\(.*\\)"
   )
+
+data <- data |> 
+  mutate(smoking_history_pack_years = case_when(
+    smoking_history_pack_years == "10>PY" ~ 10,
+    TRUE ~ as.numeric(smoking_history_pack_years)
+  )) 
 ```
 
 ## Save cleaned data
