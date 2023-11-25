@@ -73,7 +73,7 @@ plot_pca_ethnicity <- pca_fit |>
       y = .fittedPC2, 
       )) + 
   geom_point(aes_string(
-      color =   "to_plot"  ),
+      color =   to_plot  ),
     size = 3,) +
   theme_half_open(12) +
   background_grid()+
@@ -90,130 +90,24 @@ plot_pca_ethnicity <- pca_fit |>
  plot_pca_ethnicity
 }
 
+
+
+ 
+ 
 ```
 
-### plot all
+#### plot all
+
+None of the meta data seems to explain the subgroups.
 
 ```{r}
 
-for (x in colnames(data[1:32])) {
-  pca_meta_data(x)
+for (x in colnames(data[2:32])) {
+  print(pca_meta_data(x))
 }
 ```
 
-```{r}
-
-# PCA for hc clusts
-plot_pca_ethnicity <- pca_fit |>
-  augment(data) |> 
-  filter(!is.na(survival)) |>
-  ggplot(
-    aes(
-      x = .fittedPC1,
-      y = .fittedPC2, 
-      #shape = factor(hc_cluster)
-      #label = hc_cluster,
-      )) + 
-  geom_point(aes(
-    #shape = hc_cluster,
-      #shape = factor(hc_cluster),
-      color =   ethnicity  ),
-    size = 3,) +
-    #size = 3,
-    #shape = hc_cluster) +
-    #shape = 21) +
-  theme_half_open(12) +
-  background_grid()+
-  geom_vline(xintercept = 0) +
-  geom_hline(yintercept = 0) +
-  labs(
-    title = "PCA: Paitiens clusters by Trancriptpics",
-    x = pluck(pca_plot_axes_labels, 1),
-    y = pluck(pca_plot_axes_labels, 2),
-    shape = "Pantient HC",
-    fill = "Survival Category",
-    caption = "Data from doi.org/10.1038/s42003-021-01842-7")+
-  theme(plot.caption.position = "plot")
- 
-
-plot_pca_ethnicity
-
-
-# PCA for hc clusts
-plot_pca_hc <- pca_fit |>
-  augment(data) |> 
-  filter(!is.na(survival)) |>
-  ggplot(
-    aes(
-      x = .fittedPC1,
-      y = .fittedPC2, 
-      #shape = factor(hc_cluster)
-      #label = hc_cluster,
-      )) + 
-  geom_point(aes(
-    #shape = hc_cluster,
-      #shape = factor(hc_cluster),
-      color =   stage_m  ),
-    size = 3,) +
-    #size = 3,
-    #shape = hc_cluster) +
-    #shape = 21) +
-  theme_half_open(12) +
-  background_grid()+
-  geom_vline(xintercept = 0) +
-  geom_hline(yintercept = 0) +
-  labs(
-    title = "PCA: Paitiens clusters by Trancriptpics",
-    x = pluck(pca_plot_axes_labels, 1),
-    y = pluck(pca_plot_axes_labels, 2),
-    shape = "Pantient HC",
-    fill = "Survival Category",
-    caption = "Data from doi.org/10.1038/s42003-021-01842-7")+
-  theme(plot.caption.position = "plot")
- 
-
-plot_pca_hc
-
-```
-
-```{r}
-
-# PCA for hc clusts
-plot_pca_hc <- pca_fit |>
-  augment(data) |> 
-  filter(!is.na(survival)) |>
-  ggplot(
-    aes(
-      x = .fittedPC1,
-      y = .fittedPC2, 
-      #shape = factor(hc_cluster)
-      #label = hc_cluster,
-      )) + 
-  geom_point(aes(
-    #shape = hc_cluster,
-      #shape = factor(hc_cluster),
-      color =   survival  ),
-    size = 3,) +
-    #size = 3,
-    #shape = hc_cluster) +
-    #shape = 21) +
-  theme_half_open(12) +
-  background_grid()+
-  geom_vline(xintercept = 0) +
-  geom_hline(yintercept = 0) +
-  labs(
-    title = "PCA: Paitiens clusters by Trancriptpics",
-    x = pluck(pca_plot_axes_labels, 1),
-    y = pluck(pca_plot_axes_labels, 2),
-    shape = "Pantient HC",
-    fill = "Survival Category",
-    caption = "Data from doi.org/10.1038/s42003-021-01842-7")+
-  theme(plot.caption.position = "plot")
- 
-
-plot_pca_hc
-
-```
+#### One prettie one to show
 
 ```{r}
 
@@ -224,18 +118,11 @@ plot_pca_hc <- pca_fit |>
   ggplot(
     aes(
       x = .fittedPC1,
-      y = .fittedPC2, 
-      #shape = factor(hc_cluster)
-      #label = hc_cluster,
-      )) + 
-  geom_point(aes_string(
-    #shape = hc_cluster,
-      #shape = factor(hc_cluster),
-      color =   colnames(data[c(24)])),
+      y = .fittedPC2, )) + 
+  geom_point(
+    aes_string(
+      color =   "survival"),
     size = 3) +
-    #size = 3,
-    #shape = hc_cluster) +
-    #shape = 21) +
   theme_half_open(12) +
   background_grid()+
   geom_vline(xintercept = 0) +
@@ -245,62 +132,11 @@ plot_pca_hc <- pca_fit |>
     x = pluck(pca_plot_axes_labels, 1),
     y = pluck(pca_plot_axes_labels, 2),
     shape = "Pantient HC",
-    fill = "Survival Category",
+    color = "Survival Catagorie",
     caption = "Data from doi.org/10.1038/s42003-021-01842-7")+
   theme(plot.caption.position = "plot")
 plot_pca_hc
 
-
-```
-
-```{r}
-
-
-plot_pca_hc <- pca_fit |>
-  augment(data) |> 
-  filter(!is.na(survival)) |>
-  ggplot(
-    aes(
-      x = .fittedPC1,
-      y = .fittedPC2, 
-      #shape = factor(hc_cluster)
-      #label = hc_cluster,
-      )) + 
-  geom_point(aes_string(
-    #shape = hc_cluster,
-      #shape = factor(hc_cluster),
-      color =   colnames(data[c(32)])),
-    size = 3) +
-    #size = 3,
-    #shape = hc_cluster) +
-    #shape = 21) +
-  theme_half_open(12) +
-  background_grid()+
-  geom_vline(xintercept = 0) +
-  geom_hline(yintercept = 0) +
-  labs(
-    title = "PCA: Paitiens clusters by Trancriptpics",
-    x = pluck(pca_plot_axes_labels, 1),
-    y = pluck(pca_plot_axes_labels, 2),
-    shape = "Pantient HC",
-    fill = "Survival Category",
-    caption = "Data from doi.org/10.1038/s42003-021-01842-7")+
-  theme(plot.caption.position = "plot")
-plot_pca_hc
-
-```
-
-```{r}
-plot_pca_sur <- pca_fit |>
-  augment(data) |> 
-  ggplot(aes(.fittedPC1, .fittedPC2, color = survival)) + 
-  geom_point(size = 1.5) +
-  theme_half_open(12) +
-  background_grid() +
-  geom_vline(xintercept = 0) +
-  geom_hline(yintercept = 0) 
-
-plot_pca_sur
 
 ```
 
@@ -363,7 +199,7 @@ pca_fit |>
   theme_minimal_grid(12)
 ```
 
-## Plots of clusters
+### Plots of clusters
 
 ```{r}
 violen_plot <- function(to_plot) {
