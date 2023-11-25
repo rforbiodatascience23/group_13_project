@@ -8,6 +8,7 @@ editor: visual
 ---
 
 ## Load libraries
+
 ```{r}
 library("tidyverse")
 library("here")
@@ -15,14 +16,13 @@ library("broom")
 library("limma")
 ```
 
-
 ## Load data
 
 ```{r}
 data <- read_tsv(here("data/03_dat_augment.tsv"))
 ```
 
-## Drop samples with NA in survival status 
+## Drop samples with NA in survival status
 
 ```{r}
 data <- data |>
@@ -30,6 +30,7 @@ data <- data |>
 ```
 
 ## Get expression data from all data
+
 ```{r}
 # Extract the expression data
 expression_data <- data |>
@@ -39,9 +40,7 @@ expression_data <- data |>
 expr_log <- expression_data |>
   mutate(across(-survival_status, ~ log2(. + 1)))
 
-````
 
-```{r}
 
 # Pivot longer
 expr_log_long <- expr_log |>
@@ -105,7 +104,6 @@ expr_estimates |>
   select(gene, p.value) |>
   View()
 ```
-
 
 ```{r}
 pl1 <- expr_estimates |>
