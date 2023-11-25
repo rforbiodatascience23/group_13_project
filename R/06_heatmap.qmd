@@ -5,6 +5,9 @@ format: html
 author: Thomas Tams (s204540)
 date: "2023-11-21"
 editor: visual
+execute:
+  message: false
+  warning: false
 ---
 
 ## Load libraries
@@ -18,274 +21,86 @@ library("here")
 source(here("R/99_proj_func.R"))
 ```
 
-## Load data
+## Load selected transcript data
 
 ```{r}
-# Load data
-data <- read_tsv(here("data/02_dat_clean.tsv"))
+select_transcript_meta <- 
+  read_tsv(here("data/03_dat_selected_transcript_augment.tsv"))
+
+select_transcript_meta
 ```
 
-## Get expression data from all data
+## Select expression data and pivot to have transcripts as rows and log2(1+FPKM) expression values
 
 ```{r}
-expression_data <- data |> 
-  select(1, 30:ncol(data))
-```
-
-## Log transform and transpose data to have transcript per row
-
-```{r}
-# Log(1 + FPKM) transformation of expression value
-# and transposing of the expression data
-expr_log_trans <- expression_data |>
-  group_by(sample_id) |>
-  pivot_longer(-sample_id,
-              names_to = "transcript_id",
-              values_to = "expression_value") |>
-  mutate(expression_value = log(1 + expression_value)) |>
-  pivot_wider(names_from = sample_id,
-              values_from = expression_value) |>
-  ungroup()
-```
-
-## Filter away transcripts with only zeros
-
-```{r}
-expr_log_trans_no_zero <- expr_log_trans |>
-  filter(!if_all(starts_with("S"), ~ . == 0))
-```
-
-## Kmeans clustering on each transcript
-
-For each individual transcript we split the expression values into two states, which should correspond to a high and low expression state.
-
-```{r}
-# Clustering function that clust
-kmeans_cluster_row <- function(transcript_expr_data) {
-  # Transpose tibble to fit into the kmeans function
-  transposed_tibble <- transcript_expr_data |>
-    pivot_longer(cols = everything(),
-                 names_to = "sample_id")
-  
-  # Clustering
-  cl <- transposed_tibble |>
-    select(value) |>
-    kmeans(centers=2)
-  
-  # Chain clustering states to each expression value
-  cluster_tibble <- transposed_tibble |>
-    mutate(cluster_int = cl$cluster) |>
-    pivot_wider(names_from = sample_id,
-                values_from = value)
-  
-  return(cluster_tibble)
-}
-
-# Perform kmeans clustering on each transcript
-clust_data <- expr_log_trans_no_zero |>
-  group_by(transcript_id) |>
-  nest() |>
-  mutate(data = map(.x = data, 
-                    .f = ~kmeans_cluster_row(.x))) |>
-  unnest(data) |>
-  ungroup()
-
-# Go to long format
-clust_data_long <- clust_data |>
-  pivot_longer(cols=-c(transcript_id, cluster_int),
-               names_to = 'sample_id',
+selected_transcript_expr_log <- select_transcript_meta |>
+  select(1, 34:ncol(select_transcript_meta)) |>
+  pivot_longer(col = -sample_id,
+               names_to = 'transcript_id',
                values_to = 'expression_value') |>
-  drop_na()
+  mutate(expression_value = log2(1 + expression_value)) |>
+  pivot_wider(names_from = sample_id,
+              values_from = expression_value)
+
+selected_transcript_expr_log
 ```
 
-## Check list
-
-```{r}
-# Average expression fold change check
-fold_change <- function(val_1, val_2){
-  fold_change <- max(val_1, val_2) - min(val_1, val_2)
-  return(fold_change)
-}
-
-avg_fold_change <- clust_data_long |>
-  group_by(transcript_id, cluster_int) |>
-  summarize(avg_expression = mean(expression_value)) |>
-  ungroup(cluster_int) |>
-  pivot_wider(names_from = cluster_int,
-              values_from = avg_expression) |>
-  rename(cluster_1_avg_expr = '1',
-         cluster_2_avg_expr = '2') |>
-  mutate(fold_change = map2(.x = cluster_1_avg_expr,
-                            .y = cluster_2_avg_expr,
-                            .f = ~fold_change(val_1 = .x,
-                                              val_2 = .y))) |>
-  ungroup()
-
-# Save a list of transcript following 
-# average expression fold change > 3
-above_fold_change_threshold <- avg_fold_change |>
-  filter(!fold_change == Inf) |>
-  filter(fold_change > 3) |>
-  pull(transcript_id)
-
-
-# 6 expression values in each state check
-count_clusters <- clust_data_long |>
-  filter(transcript_id %in% above_fold_change_threshold) |>
-  group_by(transcript_id) |>
-  summarize(cluster1_n = sum(cluster_int == 1),
-            cluster2_n = sum(cluster_int == 2)) |>
-  ungroup()
-
-# Save a list of transcript ids which have 6 or more
-# expression values in each state
-more_than_6_in_each_cluster <- count_clusters |>
-  filter(cluster1_n >= 6 & cluster2_n >= 6) |>
-  pull(transcript_id)
-
-# Perform t-test and calculate false discovery rate q-values
-clust_data_long_test <- clust_data_long |>
-  filter(transcript_id %in% more_than_6_in_each_cluster) |>
-  group_by(transcript_id) |>
-  summarize(p_value = t.test(expression_value ~ cluster_int)$p.value) |>
-  mutate(q_value = p.adjust(p_value, method = "BH"))
-
-# Save a list of 
-below_q_value <- clust_data_long_test |>
-  filter(q_value < 0.01) |>
-  pull(transcript_id)
-
-selected_transcripts <- below_q_value
-```
-
-## Fishers exact test (?)
-
-```{r}
-#| eval: false
-#| echo: false
-#clust_data_long |>
-#  filter(transcript_id %in% below_q_value) |>
-#  head(486) |>
-#  select(-sample_id) |>
-#  group_by(transcript_id) |>
-#  summarise(n=n())
-#
-#clust_data_long |>
-#  filter(transcript_id %in% below_q_value) |>
-#  head(486) |>
-#  select(-sample_id) |>
-#  mutate(cluster_int = as.character(cluster_int)) |>
-#  group_by(transcript_id) |>
-#    summarise(
-#    p_value = fisher.test(table(expression_value, cluster_int))$p.value
-#  )
-
-### Example of how to run with smaller data
-# Reshape data for easier analysis
-gene_data_long <- gene_data %>%
-  pivot_longer(cols = -Group, names_to = "Gene", values_to = "Expression")
-
-gene_data_long
-
-# Perform Fisher's exact test for each gene
-fisher_results <- gene_data_long |>
-  group_by(Gene) |>
-  summarise(
-    p_value = fisher.test(table(Expression, Group))$p.value
-  )
-
-# Print the results
-fisher_results
-
-# Visualize the results
-fisher_results %>%
-  ggplot(aes(x = Gene, y = -log10(p_value))) +
-  geom_bar(stat = "identity", fill = "skyblue") +
-  labs(title = "Fisher's Exact Test for Gene Expression",
-       x = "Gene",
-       y = "-log10(p-value)")
-```
-
-## Save selected transcripts expression data to csv
-
-```{r}
-selected_transcript_expr <- expr_log_trans |>
-  filter(transcript_id %in% selected_transcripts)
-
-#selected_transcript_expr |>
-#  write_tsv(here("data/06_selected_transcript_expr.tsv"))
-```
-
-## Load expression if already exists
-
-```{r}
-if(!exists('selected_transcript_expr')){
-  selected_transcript_expr <- 
-    read_tsv(here("data/06_selected_transcript_expr.tsv"))
-}
-```
-
-## Find genes with multiple transcripts
-
-```{r}
-# check how many genes
-selected_transcript_expr_split <- selected_transcript_expr |>
-  separate(transcript_id, into = c("gene", "id"), sep = "_", extra="merge")
-
-selected_transcript_expr_split |>
-  group_by(gene) |>
-  summarise(n = n()) |>
-  arrange(desc(n))
-```
-
-## Hierarchical clustering for heatmapping
+## Hierarchical clustering for Heatmap and Dendrograms
 
 ```{r}
 # Put to matrix format for compatible hclust(dist())
-expr_matrix <- selected_transcript_expr |>
+expr_matrix <- selected_transcript_expr_log |>
   select(-transcript_id) |>
   as.matrix()
 
-rownames(expr_matrix) <- selected_transcript_expr |>
+rownames(expr_matrix) <- selected_transcript_expr_log |>
   select(transcript_id) |>
   as_vector()
 
 # Perform hierarchical clustering
-transcript_clus <- hclust(dist(expr_matrix))
-sample_clus <- hclust(dist(t(expr_matrix)))
+transcript_clus <- expr_matrix |>
+  dist() |>
+  hclust()
+
+sample_clus <- expr_matrix |>
+  t() |>
+  dist() |>
+  hclust()
 
 # Get the order
 transcript_ord <- transcript_clus$order
 sample_ord <- sample_clus$order
 
 # Extract factor names to use as levels
-fac_sample <- selected_transcript_expr |>
+levels_sample <- selected_transcript_expr_log |>
   select(-transcript_id) |>
   select(sample_ord) |>
   colnames()
 
-fac_transcript <- selected_transcript_expr |>
-  pivot_longer(cols=-transcript_id,
-             names_to = 'sample_id',
-             values_to = 'expression_value') |>
-  pivot_wider(names_from = 'transcript_id',
-              values_from = 'expression_value') |>
+levels_transcript <- selected_transcript_expr_log |>
+  pivot_longer(cols = -transcript_id,
+               names_to = 'sample_id',
+               values_to = 'expression_value') |>
+  pivot_wider(names_from = transcript_id,
+              values_from = expression_value) |>
   select(-sample_id) |>
   select(rev(transcript_ord)) |>
   colnames()
 
-# Setup factorered long data for plotting
-expr_factored_long <- selected_transcript_expr |>
+# Setup factorered long tibble for plotting
+expr_factored_long <- selected_transcript_expr_log |>
   pivot_longer(cols=-transcript_id,
              names_to = 'sample_id',
              values_to = 'expression_value') |>
   mutate(sample_id = factor(sample_id,
-                            levels=fac_sample),
+                            levels=levels_sample),
          transcript_id = factor(transcript_id,
-                           levels=fac_transcript))
+                           levels=levels_transcript))
+
+expr_factored_long
 ```
 
-## Define heatmap plot and dendrograms
+## Define Heatmap and Dendrogram plots
 
 ```{r}
 # Setup color vector for beautiful colors
@@ -297,8 +112,8 @@ hm <- expr_factored_long |>
   geom_tile() +
   scale_fill_gradientn(colors = color_vector) +
   theme_minimal() +
-  theme(axis.text.y = element_text(size = 6,
-                                   margin = margin(5,0,0,0, "cm")))
+  theme(axis.text.y = element_text(size = 6),
+        axis.text.x = element_blank())
 
 # Create dendrogram plots
 dendro_transcript <- transcript_clus |>
@@ -321,6 +136,7 @@ dendro_sample <- sample_clus |>
 # Create and empty plot for the subplotting
 p_empty <- ggplot()
 
+# Plot final combined plot
 subplot(dendro_sample, p_empty, hm, dendro_transcript,
         nrows = 3,
         heights = c(0.1, 0.89, 0.01),
