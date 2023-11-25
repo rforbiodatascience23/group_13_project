@@ -146,28 +146,3 @@ subplot(dendro_sample, p_empty, hm, dendro_transcript,
          height= 600,
          width = 1200)
 ```
-
-Find 69 with expression samples which also has genome sequencing data log2(1 + FPKM) (probably transformed already in from excel sheet)
-
-Search for high and low expression characteristics over the samples
-
--   Divided each transcript into two groups (states) via k-means clustering
-
-<!-- -->
-
--   Only transcripts with at least 6 samples in each state should are continued with
-
-<!-- -->
-
--   having a state-average fold change larger than 3
-
-<!-- -->
-
--   avg(max(state_averages)) - average(min(state_averages)) \> 3
--   split values into cluster 1 and cluster 2 for each transcript
--   calculate test-t between values in each center for each transcript
-    -   keep only transcript with q \> 0.01
--   Multiple gene transcript which meets requirements do either
-    -   Select lowest q values to represent the gene (like in the paper)
-    -   keep both ?
--   Do fisher exact test (threshold 10\^-6) across transcripts and keep only transcripts with similar patterns in the two states with at least 6 other transcripts
