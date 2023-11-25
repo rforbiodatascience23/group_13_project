@@ -23,7 +23,7 @@ source(here("R/99_proj_func.R"))
 
 ```{r}
 # Load data
-data <- read_tsv(here("data/03_dat_augment.tsv"))
+data <- read_tsv(here("data/03_dat_selected_transcript_augment.tsv"))
 ```
 
 ## PCA
@@ -35,7 +35,7 @@ Exploration of the trancrips data in PCA space
 ```{r}
 # Subset data to expression data
 input_pca <- data |>
-  select(-c(1:32))
+  select(-c(1:33))
 
 # Run pca 
 pca_fit <- log2(input_pca + 1) |>
@@ -65,8 +65,7 @@ Explore meta data
 # Funciton to plot in PCA space
 pca_meta_data <- function(to_plot) {
 plot_pca_ethnicity <- pca_fit |>
-  augment(data) |> 
-  filter(!is.na(survival)) |>
+  augment(data)  |>
   ggplot(
     aes(
       x = .fittedPC1,
