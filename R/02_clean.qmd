@@ -19,7 +19,7 @@ source(here("R/99_proj_func.R"))
 ## Load data
 
 ```{r}
-# Load data 
+# Load data
 data <- read_tsv(here("data/01_dat_load.tsv"))
 ```
 
@@ -53,7 +53,6 @@ We see that there are quite a few NAs in the meta data table. Specially, the age
 data |>
   group_by(sample_id) |>
   filter(n() > 1)
-
 ```
 
 There are no duplicates
@@ -77,6 +76,12 @@ data <- data |>
     str_remove,
     pattern = "\\s*\\(.*\\)"
   )
+
+data <- data |> 
+  mutate(smoking_history_pack_years = case_when(
+    smoking_history_pack_years == "10>PY" ~ 10,
+    TRUE ~ as.numeric(smoking_history_pack_years)
+  )) 
 ```
 
 ## Save cleaned data
@@ -85,5 +90,6 @@ data <- data |>
 # Save as .tsv file
 write_tsv(
   data,
-  here("data/02_dat_clean.tsv"))
+  here("data/02_dat_clean.tsv")
+)
 ```
