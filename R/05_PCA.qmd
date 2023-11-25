@@ -101,7 +101,7 @@ None of the meta data seems to explain the subgroups.
 
 ```{r}
 
-for (x in colnames(data[2:32])) {
+for (x in colnames(data[2:33])) {
   print(pca_meta_data(x))
 }
 ```
@@ -113,14 +113,14 @@ for (x in colnames(data[2:32])) {
 
 plot_pca_hc <- pca_fit |>
   augment(data) |> 
-  filter(!is.na(survival)) |>
+  filter(!is.na(survival_time)) |>
   ggplot(
     aes(
       x = .fittedPC1,
       y = .fittedPC2, )) + 
   geom_point(
     aes_string(
-      color =   "survival"),
+      color =   "survival_time"),
     size = 3) +
   theme_half_open(12) +
   background_grid()+
@@ -204,9 +204,9 @@ pca_fit |>
 violen_plot <- function(to_plot) {
    gender_age_box <- data |> 
   ggplot(mapping = aes_string(
-    x = "hc_cluster",
+    x = "sample_cluster",
     y = to_plot,
-    fill = "hc_cluster"
+    fill = "sample_cluster"
   ))+
   geom_violin(
         alpha = 0.8,
@@ -235,8 +235,7 @@ trancrip_to_plot <- pca_fit |>
   slice(1)|>
   pull()
 
-trancrip_to_plot|>
-  violen_plot()
+
 
 ```
 
@@ -250,13 +249,13 @@ trancrip_to_plot <- pca_fit |>
   pull()
 
 mean_data_pca1 <- data |>
-  group_by(hc_cluster)|>
+  group_by(sample_cluster)|>
   select(trancrip_to_plot)|>
-  summarise(mean_POU2F3_NM_014352 = mean(POU2F3_NM_014352),
-            mean_C11orf53_NM_198498 = mean(C11orf53_NM_198498),
-            mean_GFI1B_NM_004188 = mean(GFI1B_NM_004188),
-            mean_POU2F3_NM_001244682 = mean(POU2F3_NM_001244682),
-            mean_PNOC_NM_006228 = mean(PNOC_NM_006228))
+  summarise(ANXA1_NM_000700 = mean(ANXA1_NM_000700),
+            AZGP1_NM_001185 = mean(AZGP1_NM_001185),
+            POU2F3_NM_014352 = mean(POU2F3_NM_014352),
+            CALML5_NM_017422 = mean(CALML5_NM_017422),
+            C11orf53_NM_198498 = mean(C11orf53_NM_198498))
 
 mean_data_pca1
 
@@ -278,14 +277,14 @@ trancrip_to_plot <- pca_fit |>
   pull()
 
 mean_data_pca2 <- data |>
-  group_by(hc_cluster)|>
+  group_by(sample_cluster)|>
   summarise(mean_GNG8_NM_033258 = mean(GNG8_NM_033258),
             mean_NHLH1_NM_005598 = mean(NHLH1_NM_005598),
             mean_PALM_NM_001040134 = mean(PALM_NM_001040134),
             mean_KCNQ2_NM_172109 = mean(KCNQ2_NM_172109),
             mean_NPTX2_NM_002523 = mean(NPTX2_NM_002523))|>
     pivot_longer(
-    cols = -hc_cluster,
+    cols = -sample_cluster,
     names_to = "trancrips",
     values_to = "expression"
   )
@@ -293,7 +292,7 @@ mean_data_pca2 <- data |>
 ggplot(
   mean_data_pca2, 
        aes(
-         hc_cluster,
+         sample_cluster,
          expression,
          group = trancrips)) +
   geom_point(
@@ -306,7 +305,7 @@ ggplot(
 
 ```
 
-#### Clusters in boxplot by DET
+#### DET cluster PC1 
 
 ```{r}
 
@@ -319,10 +318,10 @@ trancrip_to_plot <- pca_fit |>
   pull()
 
 mean_data_pca2 <- data |>
-  group_by(hc_cluster)|>
+  group_by(sample_cluster)|>
   select(trancrip_to_plot)|>
     pivot_longer(
-    cols = -hc_cluster,
+    cols = -sample_cluster,
     names_to = "trancrips",
     values_to = "expression"
   )
@@ -331,14 +330,47 @@ mean_data_pca2 <- data |>
 ggplot(
   mean_data_pca2, 
        aes(
-         hc_cluster,
+         sample_cluster,
          expression,
          fill = trancrips,
          dodge = trancrips)) +
   stat_boxplot(
     geom ='errorbar')+
   geom_boxplot()
-mean_data_pca2
+
+```
+
+#### DET cluster PC1 
+
+```{r}
+trancrip_to_plot <- pca_fit |>
+  tidy(matrix = "rotation") |>
+  pivot_wider(names_from = "PC", names_prefix = "PC", values_from = "value") |>
+  arrange(desc(PC2))|>
+  select(column)|>
+  slice(1:5)|>
+  pull()
+
+mean_data_pca2 <- data |>
+  group_by(sample_cluster)|>
+  select(trancrip_to_plot)|>
+    pivot_longer(
+    cols = -sample_cluster,
+    names_to = "trancrips",
+    values_to = "expression"
+  )
+
+
+ggplot(
+  mean_data_pca2, 
+       aes(
+         sample_cluster,
+         expression,
+         fill = trancrips,
+         dodge = trancrips)) +
+  stat_boxplot(
+    geom ='errorbar')+
+  geom_boxplot()
 ```
 
 ```{r}
@@ -352,14 +384,14 @@ trancrip_to_plot <- pca_fit |>
   pull()
 
 mean_data <- data |>
-  group_by(hc_cluster)|>
+  group_by(sample_cluster)|>
   summarise(mean(trancrip_to_plot))
   
 
 ggplot(data,aes_string(
-    x = "hc_cluster",
+    x = "sample_cluster",
     y = trancrip_to_plot,
-    fill = "hc_cluster")
+    fill = "sample_cluster")
     ) +
   geom_boxplot()
 ```
@@ -368,9 +400,9 @@ ggplot(data,aes_string(
 
 
 ggplot(data,aes(
-    x = hc_cluster,
+    x = sample_cluster,
     y = POU2F3_NM_014352,
-    fill = hc_cluster)
+    fill = sample_cluster)
     ) +
   geom_boxplot()
 ```
