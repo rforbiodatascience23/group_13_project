@@ -10,6 +10,9 @@ editor: visual
 ## Load libraries
 
 ```{r}
+library('ggdendro')
+library('dendextend')
+library('plotly')
 library('tidyverse')
 library("here")
 source(here("R/99_proj_func.R"))
@@ -32,14 +35,14 @@ expression_data <- data |>
 ## Log transform and transpose data to have transcript per row
 
 ```{r}
-# Log2(1 + FPKM) transformation of expression value
+# Log(1 + FPKM) transformation of expression value
 # and transposing of the expression data
 expr_log_trans <- expression_data |>
   group_by(sample_id) |>
   pivot_longer(-sample_id,
               names_to = "transcript_id",
               values_to = "expression_value") |>
-  mutate(expression_value = log2(1 + expression_value)) |>
+  mutate(expression_value = log(1 + expression_value)) |>
   pivot_wider(names_from = sample_id,
               values_from = expression_value) |>
   ungroup()
@@ -152,59 +155,32 @@ below_q_value <- clust_data_long_test |>
   filter(q_value < 0.01) |>
   pull(transcript_id)
 
-
-clust_data_long |>
-  filter(transcript_id %in% below_q_value) |>
-  head(486) |>
-  select(-sample_id) |>
-  group_by(transcript_id) |>
-  summarise(n=n())
-
-clust_data_long |>
-  filter(transcript_id %in% below_q_value) |>
-  head(486) |>
-  select(-sample_id) |>
-  mutate(cluster_int = as.character(cluster_int)) |>
-  group_by(transcript_id) |>
-    summarise(
-    p_value = fisher.test(table(expression_value, cluster_int))$p.value
-  )
-
-
-```
-
-```{r}
 selected_transcripts <- below_q_value
-selected_transcripts |>
-  as_tibble() |>
-  write_tsv(here("data/below.tsv"))
-
-if(!exists('selected_transcripts')){
-  selected_transcripts <- 
-    read_tsv(here("data/below.tsv"))
-}
-
-selected_transcripts <- selected_transcripts |>
-  as_vector()
 ```
 
-```{r}
-# Sample data
-set.seed(123)
-gene_data <- data.frame(
-  Group = rep(c("Group1", "Group2"), each = 10),
-  Gene1 = sample(c(0, 1), 20, replace = TRUE),
-  Gene2 = sample(c(0, 1), 20, replace = TRUE),
-  Gene3 = sample(c(0, 1), 20, replace = TRUE),
-  Gene4 = sample(c(0, 1), 20, replace = TRUE),
-  Gene5 = sample(c(0, 1), 20, replace = TRUE),
-  Gene6 = sample(c(0, 1), 20, replace = TRUE)
-  # ... add more genes as needed
-)
-
-```
+## Fishers exact test (?)
 
 ```{r}
+#| eval: false
+#| echo: false
+#clust_data_long |>
+#  filter(transcript_id %in% below_q_value) |>
+#  head(486) |>
+#  select(-sample_id) |>
+#  group_by(transcript_id) |>
+#  summarise(n=n())
+#
+#clust_data_long |>
+#  filter(transcript_id %in% below_q_value) |>
+#  head(486) |>
+#  select(-sample_id) |>
+#  mutate(cluster_int = as.character(cluster_int)) |>
+#  group_by(transcript_id) |>
+#    summarise(
+#    p_value = fisher.test(table(expression_value, cluster_int))$p.value
+#  )
+
+### Example of how to run with smaller data
 # Reshape data for easier analysis
 gene_data_long <- gene_data %>%
   pivot_longer(cols = -Group, names_to = "Gene", values_to = "Expression")
@@ -249,6 +225,8 @@ if(!exists('selected_transcript_expr')){
 }
 ```
 
+## Find genes with multiple transcripts
+
 ```{r}
 # check how many genes
 selected_transcript_expr_split <- selected_transcript_expr |>
@@ -260,22 +238,97 @@ selected_transcript_expr_split |>
   arrange(desc(n))
 ```
 
-```{r}
+## Hierarchical clustering for heatmapping
 
+```{r}
+# Put to matrix format for compatible hclust(dist())
+expr_matrix <- selected_transcript_expr |>
+  select(-transcript_id) |>
+  as.matrix()
+
+rownames(expr_matrix) <- selected_transcript_expr |>
+  select(transcript_id) |>
+  as_vector()
+
+# Perform hierarchical clustering
+transcript_clus <- hclust(dist(expr_matrix))
+sample_clus <- hclust(dist(t(expr_matrix)))
+
+# Get the order
+transcript_ord <- transcript_clus$order
+sample_ord <- sample_clus$order
+
+# Extract factor names to use as levels
+fac_sample <- selected_transcript_expr |>
+  select(-transcript_id) |>
+  select(sample_ord) |>
+  colnames()
+
+fac_transcript <- selected_transcript_expr |>
+  pivot_longer(cols=-transcript_id,
+             names_to = 'sample_id',
+             values_to = 'expression_value') |>
+  pivot_wider(names_from = 'transcript_id',
+              values_from = 'expression_value') |>
+  select(-sample_id) |>
+  select(rev(transcript_ord)) |>
+  colnames()
+
+# Setup factorered long data for plotting
+expr_factored_long <- selected_transcript_expr |>
+  pivot_longer(cols=-transcript_id,
+             names_to = 'sample_id',
+             values_to = 'expression_value') |>
+  mutate(sample_id = factor(sample_id,
+                            levels=fac_sample),
+         transcript_id = factor(transcript_id,
+                           levels=fac_transcript))
 ```
 
-```{r}
-expr_matrix <- as.matrix(selected_transcript_expr[, -1])
-rownames(expr_matrix) <- selected_transcript_expr$transcript_id
+## Define heatmap plot and dendrograms
 
+```{r}
+# Setup color vector for beautiful colors
 color_vector <- colorRampPalette(c("darkblue", "turquoise", "green", "yellow"))(n = 100)
 
-expr_matrix |>
-  pheatmap::pheatmap(color=color_vector)
+# Plot heatmap via geom_tile()
+hm <- expr_factored_long |>
+  ggplot(aes(y=transcript_id, x=sample_id, fill=expression_value)) +
+  geom_tile() +
+  scale_fill_gradientn(colors = color_vector) +
+  theme_minimal() +
+  theme(axis.text.y = element_text(size = 6,
+                                   margin = margin(5,0,0,0, "cm")))
 
+# Create dendrogram plots
+dendro_transcript <- transcript_clus |>
+  as.dendrogram() |>
+  ggdendrogram(rotate = TRUE,
+               size=7) +
+  theme(axis.text.y = element_blank(),
+        axis.text.x = element_blank())
 
+dendro_sample <- sample_clus |>
+  as.dendrogram() |>
+  ggdendrogram(rotate = FALSE) +
+  theme(axis.text.y = element_blank(),
+      axis.text.x = element_blank())
+```
 
-color_vector
+## Combine plots
+
+```{r}
+# Create and empty plot for the subplotting
+p_empty <- ggplot()
+
+subplot(dendro_sample, p_empty, hm, dendro_transcript,
+        nrows = 3,
+        heights = c(0.1, 0.89, 0.01),
+        widths = c(0.9, 0.1),
+        margin = 0.01) |>
+  layout(title= 'Combined plots',
+         height= 600,
+         width = 1200)
 ```
 
 Find 69 with expression samples which also has genome sequencing data log2(1 + FPKM) (probably transformed already in from excel sheet)
@@ -301,12 +354,4 @@ Search for high and low expression characteristics over the samples
 -   Multiple gene transcript which meets requirements do either
     -   Select lowest q values to represent the gene (like in the paper)
     -   keep both ?
--   Do fisher exact test (threshold 1026) across transcripts and keep only transcripts with similar patterns in the two states with at least 6 other transcripts
-
-```{r}
-my_tibble <- tibble(
-  Group = rep(c("A", "B"), each = 3),
-  Value1 = c(10, 15, 20, 25, 30, 35),
-  Value2 = c(5, 10, 15, 20, 25, 30)
-)
-```
+-   Do fisher exact test (threshold 10\^-6) across transcripts and keep only transcripts with similar patterns in the two states with at least 6 other transcripts
