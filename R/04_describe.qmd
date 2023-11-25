@@ -14,6 +14,7 @@ library("here")
 library("patchwork")
 library("viridis")
 library("plotly")
+library("ggridges")
 ```
 
 ## load data
@@ -52,6 +53,9 @@ gender_bar <- data |>
     title = "Amount of patients",
     subtitle = "stratified on gender",
     y = ""
+  )+
+  theme(
+    panel.grid.major.x = element_blank()
   )
 
 
@@ -84,27 +88,29 @@ race_bar <- data |>
   ggplot(mapping = aes(
     x = ethnicity,
     fill = sex
-  ))+
+  )) +
   geom_bar(
     alpha = 0.8,
     position = "dodge"
-  )+
+  ) +
   labs(
     title = "Distribution of ethnicities",
+    subtitle = "Stratified on gender",
     y = ""
-  )+
+  ) +
   theme(
     panel.grid.major.x = element_blank()
   )
 
-race_bar + labs(subtitle = "Stratified on gender") +
-   geom_bar(show.legend = FALSE)+
-  geom_text(aes(
-    label = ..count..), 
+race_bar+
+  geom_text(
+    aes(label = ..count..), 
     stat = "count", 
-    vjust = 1.5, 
-    colour = "black"
-  )
+    vjust = -0.3,
+    colour = "black",
+    position = position_dodge(width = 0.9)
+  ) 
+
 ```
 
 ## Smoking status
@@ -122,11 +128,11 @@ smoking_s_bar <- data |>
     vjust = 1.5, 
     colour = "black"
   )+
-  scale_fill_viridis(discrete = TRUE, alpha = 0.6)+
   labs(
     title = "Distribution of type of smokers",
     y = ""
   )+
+  #scale_fill_brewer(palette = "Set2") + Doesnt color NAs
   theme(
     panel.grid.major.x = element_blank()
   )
@@ -135,26 +141,91 @@ smoking_s_bar
 ```
 
 ```{r}
-race_bar + facet_wrap(~smoking_status) + 
+race_bar_faceted <- race_bar +
+  facet_wrap(~smoking_status) +
   labs(subtitle = "Stratified on gender and smoking status")
+race_bar_faceted
 ```
 
-### Ciggarete use
+### Cigarette use
 
 ```{r}
 yearly_smoke <- data |> 
   mutate(smoking_history_pack_years = case_when(
-    smoking_history_pack_years == ">10PY" ~ 10.5,
-    TRUE ~ as.numeric(smoking_history_pack_years)  # Handling other cases
+    smoking_history_pack_years == "10>PY" ~ 10,
+    TRUE ~ as.numeric(smoking_history_pack_years)
   )) |> 
-  mutate(smoking_history_pack_years = as.integer(smoking_history_pack_years)) |>
-  mutate(smoking_history_pack_years = factor(smoking_history_pack_years)) |> 
-  ggplot(mapping = aes(x = reorder(smoking_history_pack_years))) +
-  geom_bar(
-    stat = "count", 
-    position = position_dodge()
+  ggplot(aes(y = smoking_history_pack_years)) +
+  geom_histogram(
+    binwidth = 5,
+    fill = "#FF5733",
+    color = "black",
+    alpha = 0.6
+  ) +
+  theme_minimal() +
+  coord_flip()+
+  labs(
+    title = "Histogram of Packs Smoked Per Year",
+    x = "",
+    y = "Packs per Year"
   )
-  
-  
-yearly_smoke 
+
+yearly_smoke
+
+```
+
+There are 30 patients that haven't specified the amount of packs they smoke a year (NA).
+
+```{r}
+data <- data |> 
+  mutate(
+    treatment_group = case_when(
+      is.na(chemotherapy_neo_adjuvant_yes_no) | is.na(chemotherapy_yes_no) | is.na(radiation_yes_no) ~ "Data Missing",
+      chemotherapy_neo_adjuvant_yes_no == "yes" & chemotherapy_yes_no == "yes" & radiation_yes_no == "yes" ~ "All Treatments",
+      chemotherapy_neo_adjuvant_yes_no == "yes" & chemotherapy_yes_no == "yes" & radiation_yes_no == "no" ~ "Chemo with Neoadjuvants",
+      chemotherapy_neo_adjuvant_yes_no == "no" & chemotherapy_yes_no == "yes" & radiation_yes_no == "yes" ~ "Chemo and Radiation",
+      chemotherapy_neo_adjuvant_yes_no == "no" & chemotherapy_yes_no == "yes" & radiation_yes_no == "no" ~ "Chemo Only",
+      chemotherapy_neo_adjuvant_yes_no == "no" & chemotherapy_yes_no == "no" & radiation_yes_no == "yes" ~ "Radiation Only",
+      chemotherapy_neo_adjuvant_yes_no == "no" & chemotherapy_yes_no == "no" & radiation_yes_no == "no" ~ "No treatment",
+      TRUE ~ "Other Combinations"
+    )
+  ) |> 
+  drop_na(overall_survival_months)  # Drop NA values for the variable to be plotted
+
+```
+
+Created new column for overview of treatment type.
+
+```{r}
+# Create the ridgeline plot
+ridgeline_plot <- data |> 
+  # Remove the groups with no entries
+  filter(
+    treatment_group != "Radiation Only",
+    treatment_group != "All Treatments",
+    treatment_group != "Other Combinations"
+  ) |> 
+  ggplot(mapping = aes(
+  x = overall_survival_months, 
+  y = treatment_group, 
+  fill = treatment_group
+)) +
+  geom_density_ridges(alpha = 0.6) +
+  scale_fill_brewer(
+    palette = "Set3", 
+    name = "Treatment type"
+  ) +  # Choose a color palette
+  theme_ridges(center_axis_labels = TRUE) +  # Use the theme specifically designed for ridgeline plots
+  theme(
+    text = element_text(size = 10)) +  # Increase base text size for a larger appearance
+  labs(
+    title = "Overall Survival Months by Treatment type", 
+    x = "Overall Survival Months", 
+    y = ""
+  )
+
+
+# Display the plot
+ridgeline_plot
+
 ```
