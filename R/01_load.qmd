@@ -19,7 +19,8 @@ library("readxl")
 
 ```{r}
 # Load metadata from sheet 1
-meta_data <- read_excel(
+
+meta_data < read_excel(
   here("data/_raw/raw_data.xlsx"),
   sheet = "Suppl_Table1",
   skip = 3,
