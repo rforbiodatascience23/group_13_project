@@ -131,6 +131,44 @@ plot_pca_hc <- pca_fit |>
 
 plot_pca_hc
 
+```
+
+```{r}
+
+# PCA for hc clusts
+plot_pca_hc <- pca_fit |>
+  augment(data) |> 
+  filter(!is.na(survival)) |>
+  ggplot(
+    aes(
+      x = .fittedPC1,
+      y = .fittedPC2, 
+      #shape = factor(hc_cluster)
+      #label = hc_cluster,
+      )) + 
+  geom_point(aes(
+    #shape = hc_cluster,
+      #shape = factor(hc_cluster),
+      color =   survival  ),
+    size = 3,) +
+    #size = 3,
+    #shape = hc_cluster) +
+    #shape = 21) +
+  theme_half_open(12) +
+  background_grid()+
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = "PCA: Paitiens clusters by Trancriptpics",
+    x = pluck(pca_plot_axes_labels, 1),
+    y = pluck(pca_plot_axes_labels, 2),
+    shape = "Pantient HC",
+    fill = "Survival Category",
+    caption = "Data from doi.org/10.1038/s42003-021-01842-7")+
+  theme(plot.caption.position = "plot")
+ 
+
+plot_pca_hc
 
 ```
 
@@ -434,15 +472,29 @@ trancrip_to_plot|>
 
 ```{r}
 
-#ggplot(data,aes_string(
-#    x = hc_cluster,
-#    y = trancrip_to_plot)
-#    ) +
-#  geom_boxplot()
+trancrip_to_plot <- pca_fit |>
+  tidy(matrix = "rotation") |>
+  pivot_wider(names_from = "PC", names_prefix = "PC", values_from = "value") |>
+  arrange(desc(PC2))|>
+  select(column)|>
+  slice(1)|>
+  pull()
+
+ggplot(data,aes_string(
+    x = "hc_cluster",
+    y = trancrip_to_plot,
+    fill = "hc_cluster")
+    ) +
+  geom_boxplot()
+```
+
+```{r}
+
 
 ggplot(data,aes(
     x = hc_cluster,
-    y = POU2F3_NM_014352)
+    y = POU2F3_NM_014352,
+    fill = hc_cluster)
     ) +
   geom_boxplot()
 ```
