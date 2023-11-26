@@ -20,7 +20,7 @@ library("ggridges")
 ## load data
 
 ```{r}
-data <- read_tsv(here("data/04_dat_augment.tsv"))
+data <- read_tsv(here("data/03_dat_augment.tsv"))
 ```
 
 ## Dataset dimensions
@@ -34,46 +34,48 @@ The dataset has 81 observations and 18845 variables Each observation corresponds
 ## gender and age distribution
 
 ```{r}
-gender_bar <- data |> 
+gender_bar <- data |>
   ggplot(mapping = aes(
     x = sex,
     fill = sex
   )) +
   geom_bar(
     show.legend = FALSE
-  )+
-  geom_bar(show.legend = FALSE)+
-  geom_text(aes(
-    label = ..count..), 
-    stat = "count", 
-    vjust = 1.5, 
+  ) +
+  geom_bar(show.legend = FALSE) +
+  geom_text(
+    aes(
+      label = ..count..
+    ),
+    stat = "count",
+    vjust = 1.5,
     colour = "black"
-  )+
+  ) +
   labs(
     title = "Amount of patients",
     subtitle = "stratified on gender",
     y = ""
-  )+
+  ) +
   theme(
     panel.grid.major.x = element_blank()
   )
 
 
-gender_age_box <- data |> 
+gender_age_box <- data |>
   ggplot(mapping = aes(
     x = sex,
     y = age,
     fill = sex
-  ))+
+  )) +
   geom_violin(
-        alpha = 0.8,
-        show.legend = FALSE
-  )+
-  ggtitle("Violinplot of the age distribution")+
+    alpha = 0.8,
+    show.legend = FALSE
+  ) +
+  ggtitle("Violinplot of the age distribution") +
   labs(
     subtitle = "Stratified on gender",
     y = ""
-  )+
+  ) +
   theme(
     panel.grid.major.x = element_blank()
   )
@@ -84,7 +86,7 @@ gender_bar + gender_age_box
 ## Ethnicity
 
 ```{r}
-race_bar <- data |> 
+race_bar <- data |>
   ggplot(mapping = aes(
     x = ethnicity,
     fill = sex
@@ -102,37 +104,39 @@ race_bar <- data |>
     panel.grid.major.x = element_blank()
   )
 
-race_bar+
+race_bar +
   geom_text(
-    aes(label = ..count..), 
-    stat = "count", 
+    aes(label = ..count..),
+    stat = "count",
     vjust = -0.3,
     colour = "black",
     position = position_dodge(width = 0.9)
-  ) 
+  )
 
 ```
 
 ## Smoking status
 
 ```{r}
-smoking_s_bar <- data |> 
+smoking_s_bar <- data |>
   ggplot(mapping = aes(
     x = smoking_status,
     fill = smoking_status
-  ))+
-  geom_bar(show.legend = FALSE)+
-  geom_text(aes(
-    label = ..count..), 
-    stat = "count", 
-    vjust = 1.5, 
+  )) +
+  geom_bar(show.legend = FALSE) +
+  geom_text(
+    aes(
+      label = ..count..
+    ),
+    stat = "count",
+    vjust = 1.5,
     colour = "black"
-  )+
+  ) +
   labs(
     title = "Distribution of type of smokers",
     y = ""
-  )+
-  #scale_fill_brewer(palette = "Set2") + Doesnt color NAs
+  ) +
+  # scale_fill_brewer(palette = "Set2") + Doesnt color NAs
   theme(
     panel.grid.major.x = element_blank()
   )
@@ -150,11 +154,11 @@ race_bar_faceted
 ### Cigarette use
 
 ```{r}
-yearly_smoke <- data |> 
+yearly_smoke <- data |>
   mutate(smoking_history_pack_years = case_when(
     smoking_history_pack_years == "10>PY" ~ 10,
     TRUE ~ as.numeric(smoking_history_pack_years)
-  )) |> 
+  )) |>
   ggplot(aes(y = smoking_history_pack_years)) +
   geom_histogram(
     binwidth = 5,
@@ -163,7 +167,7 @@ yearly_smoke <- data |>
     alpha = 0.6
   ) +
   theme_minimal() +
-  coord_flip()+
+  coord_flip() +
   labs(
     title = "Histogram of Packs Smoked Per Year",
     x = "",
@@ -177,7 +181,7 @@ yearly_smoke
 There are 30 patients that haven't specified the amount of packs they smoke a year (NA).
 
 ```{r}
-data <- data |> 
+data <- data |>
   mutate(
     treatment_group = case_when(
       is.na(chemotherapy_neo_adjuvant_yes_no) | is.na(chemotherapy_yes_no) | is.na(radiation_yes_no) ~ "Data Missing",
@@ -189,8 +193,8 @@ data <- data |>
       chemotherapy_neo_adjuvant_yes_no == "no" & chemotherapy_yes_no == "no" & radiation_yes_no == "no" ~ "No treatment",
       TRUE ~ "Other Combinations"
     )
-  ) |> 
-  drop_na(overall_survival_months)  # Drop NA values for the variable to be plotted
+  ) |>
+  drop_na(overall_survival_months) # Drop NA values for the variable to be plotted
 
 ```
 
@@ -198,29 +202,30 @@ Created new column for overview of treatment type.
 
 ```{r}
 # Create the ridgeline plot
-ridgeline_plot <- data |> 
+ridgeline_plot <- data |>
   # Remove the groups with no entries
   filter(
     treatment_group != "Radiation Only",
     treatment_group != "All Treatments",
     treatment_group != "Other Combinations"
-  ) |> 
+  ) |>
   ggplot(mapping = aes(
-  x = overall_survival_months, 
-  y = treatment_group, 
-  fill = treatment_group
-)) +
+    x = overall_survival_months,
+    y = treatment_group,
+    fill = treatment_group
+  )) +
   geom_density_ridges(alpha = 0.6) +
   scale_fill_brewer(
-    palette = "Set3", 
+    palette = "Set3",
     name = "Treatment type"
-  ) +  # Choose a color palette
-  theme_ridges(center_axis_labels = TRUE) +  # Use the theme specifically designed for ridgeline plots
+  ) + # Choose a color palette
+  theme_ridges(center_axis_labels = TRUE) + # Use the theme specifically designed for ridgeline plots
   theme(
-    text = element_text(size = 10)) +  # Increase base text size for a larger appearance
+    text = element_text(size = 10)
+  ) + # Increase base text size for a larger appearance
   labs(
-    title = "Overall Survival Months by Treatment type", 
-    x = "Overall Survival Months", 
+    title = "Overall Survival Months by Treatment type",
+    x = "Overall Survival Months",
     y = ""
   )
 
@@ -233,60 +238,64 @@ ridgeline_plot
 ```{r}
 # Use t-test to investigate difference between groups
 t_result <- t.test(smoking_history_pack_years ~ status_at_time_of_last_follow_up,
-                   data = data, na.rm = TRUE)
+  data = data, na.rm = TRUE
+)
 
 # Calculate means
-means <- data |> 
-   mutate(smoking_history_pack_years = case_when(
-    smoking_history_pack_years == "10>PY" ~ 10,
-    TRUE ~ as.numeric(smoking_history_pack_years)
-  )) |> 
-  group_by(status_at_time_of_last_follow_up) |> 
-  summarise(mu = mean(smoking_history_pack_years, na.rm = TRUE),
-            label = sprintf("mean[%s] == %0.2f", status_at_time_of_last_follow_up, mu)) |> unique()
-means
-
-survival_boxplot_jitter <- data |> 
+means <- data |>
   mutate(smoking_history_pack_years = case_when(
     smoking_history_pack_years == "10>PY" ~ 10,
     TRUE ~ as.numeric(smoking_history_pack_years)
-  )) |> 
-  drop_na(smoking_history_pack_years) |> 
+  )) |>
+  group_by(status_at_time_of_last_follow_up) |>
+  summarise(
+    mu = mean(smoking_history_pack_years, na.rm = TRUE),
+    label = sprintf("mean[%s] == %0.2f", status_at_time_of_last_follow_up, mu)
+  ) |>
+  unique()
+means
+
+survival_boxplot_jitter <- data |>
+  mutate(smoking_history_pack_years = case_when(
+    smoking_history_pack_years == "10>PY" ~ 10,
+    TRUE ~ as.numeric(smoking_history_pack_years)
+  )) |>
+  drop_na(smoking_history_pack_years) |>
   ggplot(aes(
-    x = status_at_time_of_last_follow_up, 
+    x = status_at_time_of_last_follow_up,
     y = smoking_history_pack_years
   )) +
   geom_violin(
     aes(fill = status_at_time_of_last_follow_up),
     na.rm = TRUE
-    )+
+  ) +
   geom_boxplot(
-    #aes(#fill = status_at_time_of_last_follow_up), 
-    alpha = 0.2, 
+    # aes(#fill = status_at_time_of_last_follow_up),
+    alpha = 0.2,
     outlier.shape = NA,
     width = 0.5
   ) +
   geom_jitter(
     aes(color = status_at_time_of_last_follow_up),
-    width = 0.1,  
+    width = 0.1,
     alpha = 0.2,
     size = 4
   ) +
-  scale_fill_brewer(palette = "Set3") + 
-  scale_color_brewer(palette = "Set1") + 
-  theme_minimal() + 
+  scale_fill_brewer(palette = "Set3") +
+  scale_color_brewer(palette = "Set1") +
+  theme_minimal() +
   labs(
-    title = "Smoking History and Patient Survival Status", 
-    subtitle = "Distribution of packs per year smoked across survival statuses", 
-    x = "Status at Time of Last Follow-Up", 
-    y = "Smoking History (Packs per Year)", 
-    fill = "Survival Status",  
-    color = "Survival Status"  
+    title = "Smoking History and Patient Survival Status",
+    subtitle = "Distribution of packs per year smoked across survival statuses",
+    x = "Status at Time of Last Follow-Up",
+    y = "Smoking History (Packs per Year)",
+    fill = "Survival Status",
+    color = "Survival Status"
   ) +
-  theme(legend.position = "bottom")  
+  theme(legend.position = "bottom")
 
 
-survival_boxplot_jitter+
+survival_boxplot_jitter +
   geom_point(
     data = means,
     mapping = aes(
@@ -295,7 +304,7 @@ survival_boxplot_jitter+
     ),
     color = "purple",
     size = 3
-  )+
+  ) +
   geom_label(
     data = means,
     mapping = aes(
