@@ -10,175 +10,150 @@ editor: visual
 ## Load libraries
 
 ```{r}
-#
-#
-#
-library("ggdendro")
-library("dendextend")
-library("htmlwidgets")
-library("plotly")
 library("tidyverse")
 library("here")
-source(here("R/99_proj_func.R"))
+library("broom")
+library("ggrepel")
 ```
 
 ## Load data
 
 ```{r}
-select_transcript_meta <-
-  read_tsv(here("data/03_dat_augment.tsv"))
-``
-select_transcript_meta
+data <- read_tsv(here("data/03_dat_augment.tsv"))
+```
+
+## Drop samples with NA in survival status
+
+```{r}
+data <- data |>
+  drop_na(survival_status)
 ```
 
 ## Get expression data from all data
 
 ```{r}
-selected_transcript_expr_log <- select_transcript_meta |>
-  select(1, 34:ncol(select_transcript_meta)) |>
-  pivot_longer(
-    col = -sample_id,
-    names_to = "transcript_id",
-    values_to = "expression_value"
-  ) |>
-  mutate(expression_value = log2(1 + expression_value)) |>
-  pivot_wider(
-    names_from = sample_id,
-    values_from = expression_value
-  )
-
-selected_transcript_expr_log
+# Extract the expression data
+expression_data <- data |>
+  select(sample_id, survival_status, 32:ncol(data))
 ```
 
 ```{r}
-#
-#
-# Put to matrix format for compatible hclust(dist())
-expr_matrix <- selected_transcript_expr_log |>
-  select(-transcript_id) |>
-  as.matrix()
-
-rownames(expr_matrix) <- selected_transcript_expr_log |>
-  select(transcript_id) |>
-  as_vector()
-
-# Perform hierarchical clustering
-transcript_clus <- expr_matrix |>
-  dist() |>
-  hclust()
-
-sample_clus <- expr_matrix |>
-  t() |>
-  dist() |>
-  hclust()
-
-# Get the order
-transcript_ord <- transcript_clus$order
-sample_ord <- sample_clus$order
-
-# Extract factor names to use as levels
-levels_sample <- selected_transcript_expr_log |>
-  select(-transcript_id) |>
-  select(sample_ord) |>
-  colnames()
-
-levels_transcript <- selected_transcript_expr_log |>
+# Convert expression data into long format
+expr_long <- expression_data |>
   pivot_longer(
-    cols = -transcript_id,
-    names_to = "sample_id",
-    values_to = "expression_value"
-  ) |>
-  pivot_wider(
-    names_from = transcript_id,
-    values_from = expression_value
-  ) |>
-  select(-sample_id) |>
-  select(rev(transcript_ord)) |>
-  colnames()
+    cols = -c(sample_id, survival_status),
+    names_to = "gene",
+    values_to = "expr_level"
+  )
 
-# Setup factorered long tibble for plotting
-expr_factored_long <- selected_transcript_expr_log |>
-  pivot_longer(
-    cols = -transcript_id,
-    names_to = "sample_id",
-    values_to = "expression_value"
-  ) |>
+# Log2 transform data
+expr_log_long <- expr_long |>
   mutate(
-    sample_id = factor(sample_id,
-      levels = levels_sample
-    ),
-    transcript_id = factor(transcript_id,
-      levels = levels_transcript
+    log2_expr_level = log2(expr_level + 1)
+  )
+```
+
+```{r}
+# Nest the data
+expr_log_long_nested <- expr_log_long |>
+  group_by(gene) |>
+  nest() |>
+  ungroup()
+
+# Model each gene with a logistic regression model
+expr_log_long_nested <- expr_log_long_nested |>
+  group_by(gene) |>
+  mutate(model_object = map(
+    .x = data,
+    .f = ~ lm(
+      formula = log2_expr_level ~ survival_status,
+      data = .x
+    )
+  ))
+
+# Calculate confidence intervals
+expr_log_long_nested <- expr_log_long_nested |>
+  mutate(model_object_tidy = map(
+    .x = model_object,
+    .f = ~ tidy(
+      x = .x,
+      conf.int = TRUE,
+      conf.level = 0.95
+    )
+  ))
+
+# Unnest the data
+expr_estimates <- expr_log_long_nested |>
+  unnest(model_object_tidy) |>
+  drop_na(p.value)
+
+# Extract columns of
+expr_estimates <- expr_estimates |>
+  filter(term == "survival_status") |>
+  select(gene, p.value, estimate, conf.low, conf.high) |>
+  ungroup()
+expr_estimates
+
+expr_estimates <- expr_estimates |>
+  mutate(
+    q.value = p.adjust(p.value),
+    is_significant = case_when(
+      p.value <= 10^(-3) ~ "yes",
+      p.value > 10^(-3) ~ "no"
     )
   )
 
-expr_factored_long
-#
-#
-#
-#
-#
-# Setup color vector for beautiful colors
-color_vector <- colorRampPalette(c("darkblue", "turquoise", "green", "yellow"))(n = 100)
+expr_estimates |>
+  filter(is_significant == "yes") |>
+  select(gene, p.value) |>
+  View()
+```
 
-# Plot heatmap via geom_tile()
-hm <- expr_factored_long |>
-  ggplot(aes(y = transcript_id, x = sample_id, fill = expression_value)) +
-  geom_tile() +
-  scale_fill_gradientn(colors = color_vector) +
-  theme_minimal() +
-  theme(
-    axis.text.y = element_text(size = 6),
-    axis.text.x = element_blank()
+```{r}
+pl1 <- expr_estimates |>
+  filter(is_significant == "yes") |>
+  mutate(
+    gene = str_remove_all(gene, "_NM_.*")
+  ) |>
+  ggplot(aes(
+    x = estimate,
+    y = fct_reorder(gene, estimate),
+    xmin = conf.low,
+    xmax = conf.high
+  )) +
+  geom_vline(xintercept = 0) +
+  geom_errorbarh() +
+  geom_point() +
+  theme_minimal(base_size = 16) +
+  labs(
+    x = "Estimates (95%CIs)",
+    y = "",
+    title = "Genes Associated with Small Cell Lung Cancer",
+    caption = "Data from DOI:https://doi.org/10.1038/nature14664"
   )
+pl1
+ggsave(here("results/07_associated_genes_CI.png"), pl1)
 
-# Create dendrogram plots
-dendro_transcript <- transcript_clus |>
-  as.dendrogram() |>
-  ggdendrogram(
-    rotate = TRUE,
-    size = 7
+
+pl2 <- expr_estimates |>
+  mutate(
+    gene = str_remove_all(gene, "_NM_.*"),
+    lbl = case_when(
+      is_significant == "yes" ~ gene,
+      is_significant == "no" ~ ""
+    )
+  ) |>
+  ggplot(aes(
+    x = estimate,
+    y = -log10(p.value),
+    colour = is_significant,
+    label = lbl
+  )) +
+  geom_point(
+    size = 0.5,
+    alpha = 0.5
   ) +
-  theme(
-    axis.text.y = element_blank(),
-    axis.text.x = element_blank()
-  )
-
-dendro_sample <- sample_clus |>
-  as.dendrogram() |>
-  ggdendrogram(rotate = FALSE) +
-  theme(
-    axis.text.y = element_blank(),
-    axis.text.x = element_blank()
-  )
-#
-#
-#
-#
-#
-# Create and empty plot for the subplotting
-p_empty <- ggplot()
-
-?subplot()
-
-# Plot final combined plot
-fig <- subplot(dendro_sample, p_empty, hm, dendro_transcript,
-  nrows = 3,
-  heights = c(0.1, 0.89, 0.01),
-  widths = c(0.9, 0.1),
-  margin = 0.01
-) |>
-  layout(
-    title = "Combined plots",
-    height = 600,
-    width = 1200
-  )
-
-saveWidget(fig, file = here("results/heatmap_dendrogram.html"))
-#
-#
-#
-#
+  geom_text_repel(
     size = 4,
     max.overlaps = 20
   ) +
