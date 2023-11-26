@@ -22,11 +22,11 @@ library("ggrepel")
 data <- read_tsv(here("data/03_dat_augment.tsv"))
 ```
 
-## Drop samples with NA in survival status
+## Drop samples with NA in cluster_sample
 
 ```{r}
 data <- data |>
-  drop_na(survival_status)
+  drop_na(sample_cluster)
 ```
 
 ## Get expression data from all data
@@ -34,14 +34,14 @@ data <- data |>
 ```{r}
 # Extract the expression data
 expression_data <- data |>
-  select(sample_id, survival_status, 32:ncol(data))
+  select(sample_id, sample_cluster, 33:ncol(data))
 ```
 
 ```{r}
 # Convert expression data into long format
 expr_long <- expression_data |>
   pivot_longer(
-    cols = -c(sample_id, survival_status),
+    cols = -c(sample_id, sample_cluster),
     names_to = "gene",
     values_to = "expr_level"
   )
@@ -53,9 +53,28 @@ expr_log_long <- expr_long |>
   )
 ```
 
+## Explore cluster 1 vs all
+
+```{r}
+
+# mutate binary cluster 4 or not
+
+expr_log_long_clust <- expr_log_long|>
+  mutate(
+    cluster_4 = case_when(
+      sample_cluster == "Cluster_4" ~ 1,
+      sample_cluster != "cluster_4" ~ 0
+      ),
+    .after = sample_id
+  ) |>
+  select(!sample_cluster)
+
+expr_log_long_clust
+```
+
 ```{r}
 # Nest the data
-expr_log_long_nested <- expr_log_long |>
+expr_log_long_nested <- expr_log_long_clust |>
   group_by(gene) |>
   nest() |>
   ungroup()
@@ -66,7 +85,7 @@ expr_log_long_nested <- expr_log_long_nested |>
   mutate(model_object = map(
     .x = data,
     .f = ~ lm(
-      formula = log2_expr_level ~ survival_status,
+      formula = log2_expr_level ~ cluster_4,
       data = .x
     )
   ))
@@ -89,24 +108,24 @@ expr_estimates <- expr_log_long_nested |>
 
 # Extract columns of
 expr_estimates <- expr_estimates |>
-  filter(term == "survival_status") |>
+  filter(term == "cluster_2") |>
   select(gene, p.value, estimate, conf.low, conf.high) |>
   ungroup()
+
 expr_estimates
 
 expr_estimates <- expr_estimates |>
   mutate(
     q.value = p.adjust(p.value),
     is_significant = case_when(
-      p.value <= 10^(-3) ~ "yes",
-      p.value > 10^(-3) ~ "no"
+      q.value <= 0.05 ~ "yes",
+      q.value > 0.05 ~ "no"
     )
   )
 
 expr_estimates |>
   filter(is_significant == "yes") |>
-  select(gene, p.value) |>
-  View()
+  select(gene, q.value) 
 ```
 
 ```{r}
@@ -128,7 +147,7 @@ pl1 <- expr_estimates |>
   labs(
     x = "Estimates (95%CIs)",
     y = "",
-    title = "Genes Associated with Small Cell Lung Cancer",
+    title = "genes Associated with Small Cell Lung Cancer",
     caption = "Data from DOI:https://doi.org/10.1038/nature14664"
   )
 pl1
@@ -136,16 +155,27 @@ ggsave(here("results/07_associated_genes_CI.png"), pl1)
 
 
 pl2 <- expr_estimates |>
+    mutate(
+    is_significant = case_when(
+        gene == "ANXA1_NM_000700" ~ "prior",
+        gene == "AZGP1_NM_001185" ~ "prior",
+        gene == "C11orf53_NM_198498" ~ "prior",
+        gene == "CALML5_NM_017422" ~ "prior",
+        gene == "POU2F3_NM_014352" ~ "prior",
+        .default = is_significant
+        )
+  ) |>
   mutate(
     gene = str_remove_all(gene, "_NM_.*"),
     lbl = case_when(
       is_significant == "yes" ~ gene,
+      is_significant == "prior" ~ gene,
       is_significant == "no" ~ ""
     )
   ) |>
   ggplot(aes(
     x = estimate,
-    y = -log10(p.value),
+    y = -log10(q.value),
     colour = is_significant,
     label = lbl
   )) +
@@ -164,12 +194,13 @@ pl2 <- expr_estimates |>
   ) +
   labs(
     x = "Estimates",
-    y = bquote(-log[10](p)),
-    title = "Genes Associated with Small Cell Lung Cancer",
-    subtitle = bquote("Genes highlighted in red had a p-value < " * 10^-3),
+    y = bquote(-log[10](q)),
+    title = "Trancript Associated with Small Cell Lung Cancer",
+    subtitle = bquote("Trancript highlighted had a q-value < " * 0.05,),
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   ) +
-  scale_color_manual(values = c("black", "red"))
+  scale_color_manual(values = c("black","green", "red"))
 pl2
+
 ggsave(here("results/07_associated_genes_vulcano_plot.png"), pl2)
 ```
