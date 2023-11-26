@@ -24,7 +24,12 @@ source(here("R/99_proj_func.R"))
 ```{r}
 # Load data
 data <- read_tsv(here("data/03_dat_selected_transcript_augment.tsv"))
+data_all <- read_tsv(here("data/03_dat_all_augment.tsv"))
+
+
 ```
+
+## 
 
 ## PCA
 
@@ -68,7 +73,7 @@ plot_pca_ethnicity <- pca_fit |>
   augment(data)  |>
   ggplot(
     aes(
-      x = .fittedPC1,
+      x = .fittedPC3,
       y = .fittedPC2, 
       )) + 
   geom_point(aes_string(
@@ -111,7 +116,7 @@ for (x in colnames(data[2:33])) {
 ```{r}
 
 
-plot_pca_hc <- pca_fit |>
+plot_pca_one_feature <- pca_fit |>
   augment(data) |> 
   filter(!is.na(survival_time)) |>
   ggplot(
@@ -134,15 +139,19 @@ plot_pca_hc <- pca_fit |>
     color = "Survival Catagorie",
     caption = "Data from doi.org/10.1038/s42003-021-01842-7")+
   theme(plot.caption.position = "plot")
-plot_pca_hc
 
+
+ggsave(
+  filename = here("results/05_PCA_one_feature.png"),
+  plot = plot_pca_one_feature
+)
 
 ```
 
 ### Eigenvalue
 
 ```{r}
-pca_fit |>
+plot_eigenvalue <- pca_fit |>
   tidy("pcs") |> 
   slice_head(n = 10) |>
   mutate(percent = round(percent * 100,digits = 2)) |> 
@@ -166,6 +175,12 @@ pca_fit |>
         plot.caption = element_text(size = 10))
 
 
+
+ggsave(
+  filename = here("results/05_PCA_eigenvalue.png"),
+  plot = plot_eigenvalue
+)
+
 ```
 
 ### Feature in PCA space
@@ -178,11 +193,11 @@ arrow_style <- arrow(
 library("ggrepel")
 
 # plot rotation matrix
-pca_fit |>
+plot_PCA_features <- pca_fit |>
   tidy(matrix = "rotation") |>
   pivot_wider(names_from = "PC", names_prefix = "PC", values_from = "value") |>
-  arrange(desc(PC1))|>
-  slice(1:5)|>
+  #arrange(desc(PC1))|>
+  slice(1:10)|>
   mutate(
     column = str_remove_all(column, "_NM_.*")  
   ) |>
@@ -196,13 +211,18 @@ pca_fit |>
   xlim(-0.1, .1) + ylim(-.1, .1) +
   coord_fixed() + # fix aspect ratio to 1:1
   theme_minimal_grid(12)
+
+ggsave(
+  filename = here("results/05_PCA_feature.png"),
+  plot = plot_PCA_features
+)
 ```
 
 ### Plots of clusters in PCA
 
 ```{r}
 
-plot_pca_hc <- pca_fit |>
+plot_pca_clusters <- pca_fit |>
   augment(data) |>
   ggplot(
     aes(
@@ -236,6 +256,11 @@ plot_pca_hc <- pca_fit |>
     labels = c("Cluster 1", "Cluster 2", "Cluster 3","Cluster 4")
   ) 
 plot_pca_hc
+
+ggsave(
+  filename = here("results/05_PCA_cluster.png"),
+  plot = plot_pca_clusters
+)
 ```
 
 ### Explore the clusters
@@ -244,7 +269,7 @@ plot_pca_hc
 
 ```{r}
 
-trancrip_to_plot <- pca_fit |>
+trancrips <- pca_fit |>
   tidy(matrix = "rotation") |>
   pivot_wider(names_from = "PC", names_prefix = "PC", values_from = "value") |>
   arrange(desc(PC2))|>
@@ -265,8 +290,8 @@ mean_data_pca2 <- data |>
     values_to = "expression"
   )
 
-ggplot(
-  mean_data_pca2, 
+plot_DET_point_cluster <- mean_data_pca2 |> 
+  ggplot( 
        aes(
          sample_cluster,
          expression,
@@ -278,10 +303,15 @@ ggplot(
     aes(
       color = trancrips
     ))
+plot_DET_point_cluster
 
+ggsave(
+  filename = here("results/05_PCA_DET_pointplot_cluster.png"),
+  plot = plot_DET_point_cluster
+)
 ```
 
-#### DET cluster PC1 
+#### DET cluster PC1
 
 ```{r}
 
@@ -375,7 +405,7 @@ ggplot(
     )
 ```
 
-#### DET single box PC1 
+#### DET single box PC1
 
 ```{r}
 
