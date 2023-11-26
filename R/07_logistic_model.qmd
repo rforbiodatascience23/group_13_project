@@ -195,8 +195,8 @@ pl2 <- expr_estimates |>
   labs(
     x = "Estimates",
     y = bquote(-log[10](q)),
-    title = "genes Associated with Small Cell Lung Cancer",
-    subtitle = bquote("Genes highlighted had a q-value < " * 0.05,),
+    title = "Trancript Associated with Small Cell Lung Cancer",
+    subtitle = bquote("Trancript highlighted had a q-value < " * 0.05,),
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   ) +
   scale_color_manual(values = c("black","green", "red"))
