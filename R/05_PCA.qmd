@@ -200,6 +200,37 @@ pca_fit |>
 
 ### Plots of clusters
 
+#### In PCA
+
+```{r}
+
+plot_pca_hc <- pca_fit |>
+  augment(data) |>
+  ggplot(
+    aes(
+      x = .fittedPC1,
+      y = .fittedPC2,
+      color = sample_cluster)) + 
+  geom_point(
+    size = 3) +
+  theme_half_open(12) +
+  background_grid()+
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0) +
+  labs(
+    title = "PCA: Paitiens clusters by Trancriptpics",
+    x = pluck(pca_plot_axes_labels, 1),
+    y = pluck(pca_plot_axes_labels, 2),
+    shape = "Pantient HC",
+    color = "Samle by HC clustering",
+    caption = "Data from doi.org/10.1038/s42003-021-01842-7") +
+  theme(plot.caption.position = "plot") +
+  scale_color_manual(
+    labels = c("Control", "Treatment 1", "Treatment 2","fisk")
+  )
+plot_pca_hc
+```
+
 ```{r}
 violen_plot <- function(to_plot) {
    gender_age_box <- data |> 
