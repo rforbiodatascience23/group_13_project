@@ -15,6 +15,7 @@ execute:
 ```{r}
 library('ggdendro')
 library('dendextend')
+library('htmlwidgets')
 library('plotly')
 library('tidyverse')
 library("here")
@@ -136,8 +137,10 @@ dendro_sample <- sample_clus |>
 # Create and empty plot for the subplotting
 p_empty <- ggplot()
 
+?subplot()
+
 # Plot final combined plot
-subplot(dendro_sample, p_empty, hm, dendro_transcript,
+fig <- subplot(dendro_sample, p_empty, hm, dendro_transcript,
         nrows = 3,
         heights = c(0.1, 0.89, 0.01),
         widths = c(0.9, 0.1),
@@ -145,4 +148,6 @@ subplot(dendro_sample, p_empty, hm, dendro_transcript,
   layout(title= 'Combined plots',
          height= 600,
          width = 1200)
+
+saveWidget(fig, file = here("results/heatmap_dendrogram.html"))
 ```

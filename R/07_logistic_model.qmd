@@ -8,6 +8,7 @@ editor: visual
 ---
 
 ## Load libraries
+
 ```{r}
 library("tidyverse")
 library("here")
@@ -15,13 +16,13 @@ library("broom")
 library("ggrepel")
 ```
 
-
 ## Load data
+
 ```{r}
 data <- read_tsv(here("data/03_dat_augment.tsv"))
 ```
 
-## Drop samples with NA in survival status 
+## Drop samples with NA in survival status
 
 ```{r}
 data <- data |>
@@ -29,11 +30,12 @@ data <- data |>
 ```
 
 ## Get expression data from all data
+
 ```{r}
 # Extract the expression data
 expression_data <- data |>
   select(sample_id, survival_status, 32:ncol(data))
-````
+```
 
 ```{r}
 # Convert expression data into long format
@@ -51,7 +53,6 @@ expr_log_long <- expr_long |>
   )
 ```
 
- 
 ```{r}
 # Nest the data
 expr_log_long_nested <- expr_log_long |>
@@ -107,7 +108,6 @@ expr_estimates |>
   select(gene, p.value) |>
   View()
 ```
-
 
 ```{r}
 pl1 <- expr_estimates |>
