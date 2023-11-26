@@ -13,12 +13,9 @@ execute:
 ## Load libraries
 
 ```{r}
-library("ggdendro")
-library("dendextend")
-library("htmlwidgets")
-library("plotly")
 library("tidyverse")
 library("here")
+library("ggdendroplot")
 source(here("R/99_proj_func.R"))
 ```
 
@@ -72,10 +69,33 @@ sample_clus <- expr_matrix |>
   dist() |>
   hclust()
 
-# Get the order
-transcript_ord <- transcript_clus$order
-sample_ord <- sample_clus$order
+# bring the data.frame into a from easily usable by ggplot
+hm <- hmReady(expr_matrix, colclus = sample_clus, rowclus = transcript_clus)
 
+# Setup color vector for beautiful colors
+color_vector <- colorRampPalette(c("darkblue", "turquoise", "green", "yellow"))(n = 100)
+
+# plot the heatmap
+hmplot <- ggplot() +
+  geom_tile(data = hm, aes(x = x, y = y, fill = value)) +
+  scale_fill_gradientn(
+    colors = color_vector,
+    values = c(0, 0.25, 1)
+  ) +
+  scale_y_reverse() +
+  geom_dendro(sample_clus, ylim = c(0, -40), axis.labels = FALSE) +
+  geom_dendro(transcript_clus, xlim = c(0, -30), pointing = "side", axis.labels = FALSE) +
+  theme(
+    axis.label.x = element_blank(),
+    axis.label.y = element_blank()
+  ) +
+  theme_minimal()
+
+ggsave(here("results/06_heatmap_plot.png"), hmplot)
+
+```
+
+```{r}
 # Extract factor names to use as levels
 levels_sample <- selected_transcript_expr_log |>
   select(-transcript_id) |>
