@@ -385,17 +385,22 @@ gene_data_long <- gene_data %>%
 colnames(gene_data_long) == colnames(high_low_clustering)
 class(gene_data_long) == class(high_low_clustering)
 
+gene_data_long |>
+  mutate(high_low_clust = as.factor(high_low_clust),
+         sample_id = as.factor(sample_id)) -> fct_gene
 
 high_low_clustering |>
-  arrange(sample_id) |>
-  head(240)
+  mutate(high_low_clust = as.factor(high_low_clust),
+         sample_id = as.factor(sample_id)) -> fct_clus
 
 # Perform Fisher's exact test for each gene
-fisher_results <- gene_data_long
+fisher_results <- fct_clus |>
   group_by(transcript_id) |>
   summarise(
-    p_value = fisher.test(table(high_low_clust, sample_id))$p.value
+    p_value = fisher.test(x = high_low_clust, y = sample_id)$p.value
   )
+
+?fisher.test()
 
 # Print the results
 print(fisher_results)
