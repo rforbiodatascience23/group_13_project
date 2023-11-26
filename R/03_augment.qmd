@@ -262,47 +262,152 @@ selected_transcript_expr_split |>
 ```{r}
 #| eval: false
 #| echo: false
-#clust_data_long |>
-#  filter(transcript_id %in% below_q_value) |>
-#  head(486) |>
-#  select(-sample_id) |>
-#  group_by(transcript_id) |>
-#  summarise(n=n())
-#
-#clust_data_long |>
-#  filter(transcript_id %in% below_q_value) |>
-#  head(486) |>
-#  select(-sample_id) |>
-#  mutate(cluster_int = as.character(cluster_int)) |>
-#  group_by(transcript_id) |>
-#    summarise(
-#    p_value = fisher.test(table(expression_value, cluster_int))$p.value
-#  )
 
-### Example of how to run with smaller data
+below_q_value <- c("ASCL1_NM_004316", "AVP_NM_000490", "AZGP1_NM_001185", "BEX1_NM_018476", "C11orf53_NM_198498", "CALML3_NM_005185", "CALML5_NM_017422",   "CD164_NM_001142404", "CDKN2A_NM_058195",      "CEACAM5_NM_004363",     "CHGA_NM_001275",        "CSAG1_NM_001102576",
+"DDC_NM_000790",         "DLK1_NM_003836", "EEF1A2_NM_001958",      "FABP7_NM_001446",       "FOXI1_NM_012188",       "GHRH_NM_021081", 
+"GNG8_NM_033258",        "GRP_NM_001012513", "GRP_NM_002091",         "GUCA1A_NM_000409",      "HLA-DRB1_NM_001243965", "HLA-DRB1_NM_002124",
+"IGLL5_NM_001178126",    "MAGEA10_NM_021048",  "MAGEA1_NM_004988",      "MAGEA3_NM_005362",      "MAGEA4_NM_001011549",   "MAGEA6_NM_005363",
+"MCL1_NM_001197320"   ,  "MEST_NM_002402",  "MEST_NM_177525"        ,"MS4A15_NM_152717"   ,   "MS4A8B_NM_031457"      ,"NTS_NM_006183",  
+"PKM2_NM_182471"      ,  "POU2F3_NM_014352",  "PQBP1_NM_001032382"   , "RPL11_NM_001199802" ,   "RPL9_NM_000661"      ,  "RPS28_NM_001031",  
+"RPS4Y1_NM_001008"    ,  "RTN1_NM_206852",  "SCGB1A1_NM_003357"     ,"SCGB3A2_NM_054023"    , "SCGN_NM_006998"       , "SFTPA1_NM_001164647",
+"SFTPA1_NM_005411"    ,  "SFTPA2_NM_001098668",  "SFTPB_NM_000542"  ,     "SFTPB_NM_198843"  ,     "SFTPC_NM_001172357"  ,  "SFTPC_NM_001172410",  
+"SFTPC_NM_003018"      , "SPRR2A_NM_005988",  "SPRR2F_NM_001014450",   "SST_NM_001048"        , "STMN2_NM_007029"       ,"TFF3_NM_003226" )
+```
+
+```{r}
+clust_data_long |>
+  filter(transcript_id %in% below_q_value) |> 
+  write_tsv('quick.tsv')
+
+clust_data_long <- read_tsv('quick.tsv')
+
+# Find which states are high and which are low via state averages
+avg_expression_clust <- clust_data_long |>
+  filter(transcript_id %in% below_q_value) |>
+  group_by(transcript_id, cluster_int) |>
+  summarize(avg_expression = mean(expression_value)) |>
+  ungroup() |>
+  pivot_wider(names_from = cluster_int,
+              values_from = avg_expression) |>
+  rename(cluster_1 = '1',
+         cluster_2 = '2')
+
+avg_expression_clust
+```
+
+```{r}
+# Select 1 if cluster is of high expression value cluster and 
+# 0 if cluster is the low expression values cluster for each transcript
+which_clust_high_low <- avg_expression_clust |>
+  group_by(transcript_id) |>
+  summarise(avg_max = max(c(cluster_1, cluster_2)),
+            cluster_1_cat = ifelse(avg_max == cluster_1,
+                             1,
+                             0),
+            cluster_2_cat = ifelse(avg_max == cluster_2,
+                               1,
+                               0)
+            ) |>
+  select(transcript_id, cluster_1_cat, cluster_2_cat)
+
+which_clust_high_low
+```
+
+```{r}
+# Transform cluster_int values to high (1) or low (0) expression categories
+high_low_clustering <- clust_data_long |>
+  filter(transcript_id %in% below_q_value) |>
+  left_join(which_clust_high_low,
+            by = 'transcript_id') |>
+  mutate(high_low_clust = case_when(cluster_int == 1 & cluster_1_cat == 1 ~1,
+                                    cluster_int == 2 & cluster_2_cat == 1 ~1,
+                                    cluster_int == 1 & cluster_1_cat == 0 ~0,
+                                    cluster_int == 2 & cluster_2_cat == 0 ~0)) |>
+  select(sample_id, transcript_id, high_low_clust)
+
+high_low_clustering
+```
+
+```{r}
+# Sample data
+set.seed(143)
+gene_data <- data.frame(
+  sample_id = rep(c("Sample1", "Sample2", "Sample3",
+                "Sample4", "Sample5", "Sample6",
+                "Sample7", "Sample8", "Sample9",
+                "Sample10", "Sample11", "Sample12",
+                "Sample13", "Sample14", "Sample15",
+                "Sample18", "Sample19", "Sample18",
+                "Sample19", "Sample20", "Sample21",
+                "Sample22", "Sample23", "Sample24",
+                "Sample25", "Sample26", "Sample27",
+                "Sample28", "Sample29", "Sample30"), each = 1),
+  trans_1 = sample(c(0, 1), 30, replace = TRUE),
+  trans_2 = sample(c(0, 1), 30, replace = TRUE),
+  trans_3 = sample(c(0, 1), 30, replace = TRUE),
+  trans_4 = sample(c(0, 1), 30, replace = TRUE),
+  trans_5 = sample(c(0, 1), 30, replace = TRUE),
+  trans_6 = sample(c(0, 1), 30, replace = TRUE),
+  trans_7 = sample(c(0, 1), 30, replace = TRUE),
+  trans_8 = sample(c(0, 1), 30, replace = TRUE),
+  trans_9 = sample(c(0, 1), 30, replace = TRUE),
+  trans_10 = sample(c(0, 1), 30, replace = TRUE),
+  trans_11 = sample(c(0, 1), 30, replace = TRUE),
+  trans_12 = sample(c(0, 1), 30, replace = TRUE),
+  trans_13 = sample(c(0, 1), 30, replace = TRUE),
+  trans_14 = sample(c(0, 1), 30, replace = TRUE),
+  trans_15 = sample(c(0, 1), 30, replace = TRUE),
+  trans_16 = sample(c(0, 1), 30, replace = TRUE),
+  trans_17 = sample(c(0, 1), 30, replace = TRUE),
+  trans_18 = sample(c(0, 1), 30, replace = TRUE),
+  trans_19 = sample(c(0, 1), 30, replace = TRUE),
+  trans_20 = sample(c(0, 1), 30, replace = TRUE),
+  trans_21 = sample(c(0, 1), 30, replace = TRUE),
+  trans_22 = sample(c(0, 1), 30, replace = TRUE),
+  trans_23= sample(c(0, 1), 30, replace = TRUE),
+  trans_24 = sample(c(0, 1), 30, replace = TRUE),
+  trans_25 = sample(c(0, 1), 30, replace = TRUE),
+  trans_26 = sample(c(0, 1), 30, replace = TRUE),
+  trans_27 = sample(c(0, 1), 30, replace = TRUE),
+  trans_28 = sample(c(0, 1), 30, replace = TRUE),
+  trans_29 = sample(c(0, 1), 30, replace = TRUE),
+  trans_30= sample(c(0, 1), 30, replace = TRUE)
+  # ... add more genes as needed
+)
+
+# Print the data
+print(gene_data)
+
 # Reshape data for easier analysis
 gene_data_long <- gene_data %>%
-  pivot_longer(cols = -Group, names_to = "Gene", values_to = "Expression")
+  pivot_longer(cols = -sample_id, names_to = "transcript_id", values_to = "high_low_clust")
 
-gene_data_long
+colnames(gene_data_long) == colnames(high_low_clustering)
+class(gene_data_long) == class(high_low_clustering)
+
+
+high_low_clustering |>
+  arrange(sample_id) |>
+  head(240)
 
 # Perform Fisher's exact test for each gene
-fisher_results <- gene_data_long |>
-  group_by(Gene) |>
+fisher_results <- gene_data_long
+  group_by(transcript_id) |>
   summarise(
-    p_value = fisher.test(table(Expression, Group))$p.value
+    p_value = fisher.test(table(high_low_clust, sample_id))$p.value
   )
 
 # Print the results
-fisher_results
+print(fisher_results)
 
 # Visualize the results
 fisher_results %>%
-  ggplot(aes(x = Gene, y = -log10(p_value))) +
+  ggplot(aes(x = transcript_id, y = -log10(p_value))) +
   geom_bar(stat = "identity", fill = "skyblue") +
-  labs(title = "Fisher's Exact Test for Gene Expression",
-       x = "Gene",
+  labs(title = "Fisher's Exact Test for transcript Expression",
+       x = "transcript_id",
        y = "-log10(p-value)")
+
 ```
 
 ## Pivot to sample per row
