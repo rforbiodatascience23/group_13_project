@@ -34,7 +34,6 @@ quarto_render(
   output_file = "01_load.html"
 )
 
-
 file.rename(from =  here("results/R/01_load.html"),
             to =  here("results/01_load.html"))
 
@@ -53,4 +52,5 @@ quarto_render(
 
 file.rename(from =  here("results/R/03_augment.html"),
             to =  here("results/03_augment.html"))
+
 ```

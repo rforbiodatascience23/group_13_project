@@ -63,6 +63,8 @@ data_survival_bool <- data_survival |>
   )
 ```
 
+## Adding categorical values for treatment type
+
 ```{r}
 data_treatment <- data_survival_bool |> 
   mutate(
@@ -140,7 +142,6 @@ expr_trans_no_zero <- expr_log_trans |>
 ## Kmeans clustering on each transcript
 
 For each individual transcript we split the expression values into two states, which should correspond to a high and low expression state.
-
 
 ```{r kmeans-chunk-slow-takes-time}
 # Clustering function that clust
