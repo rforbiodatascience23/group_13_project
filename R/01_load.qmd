@@ -37,8 +37,8 @@ expr_data <- read_excel(
 
 ## Combine the metadata and expression sheets from the excel table
 
-First we will need to transpose the RNA-seq gene expression dataframe before joining it with the meta data.
 First we will need to transpose the RNA-seq gene expression dataframe before joining it with the meta data. 
+
 
 ```{r}
 # Check if there are duplicated transcripts (refseq)
