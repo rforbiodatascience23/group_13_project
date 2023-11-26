@@ -13,11 +13,11 @@ execute:
 ## Load libraries
 
 ```{r}
-library('ggdendro')
-library('dendextend')
-library('htmlwidgets')
-library('plotly')
-library('tidyverse')
+library("ggdendro")
+library("dendextend")
+library("htmlwidgets")
+library("plotly")
+library("tidyverse")
 library("here")
 source(here("R/99_proj_func.R"))
 ```
@@ -25,8 +25,8 @@ source(here("R/99_proj_func.R"))
 ## Load selected transcript data
 
 ```{r}
-select_transcript_meta <- 
-  read_tsv(here("data/03_dat_selected_transcript_augment.tsv"))
+select_transcript_meta <-
+  read_tsv(here("data/03_dat_augment.tsv"))
 
 select_transcript_meta
 ```
@@ -36,12 +36,16 @@ select_transcript_meta
 ```{r}
 selected_transcript_expr_log <- select_transcript_meta |>
   select(1, 34:ncol(select_transcript_meta)) |>
-  pivot_longer(col = -sample_id,
-               names_to = 'transcript_id',
-               values_to = 'expression_value') |>
+  pivot_longer(
+    col = -sample_id,
+    names_to = "transcript_id",
+    values_to = "expression_value"
+  ) |>
   mutate(expression_value = log2(1 + expression_value)) |>
-  pivot_wider(names_from = sample_id,
-              values_from = expression_value)
+  pivot_wider(
+    names_from = sample_id,
+    values_from = expression_value
+  )
 
 selected_transcript_expr_log
 ```
@@ -79,24 +83,34 @@ levels_sample <- selected_transcript_expr_log |>
   colnames()
 
 levels_transcript <- selected_transcript_expr_log |>
-  pivot_longer(cols = -transcript_id,
-               names_to = 'sample_id',
-               values_to = 'expression_value') |>
-  pivot_wider(names_from = transcript_id,
-              values_from = expression_value) |>
+  pivot_longer(
+    cols = -transcript_id,
+    names_to = "sample_id",
+    values_to = "expression_value"
+  ) |>
+  pivot_wider(
+    names_from = transcript_id,
+    values_from = expression_value
+  ) |>
   select(-sample_id) |>
   select(rev(transcript_ord)) |>
   colnames()
 
 # Setup factorered long tibble for plotting
 expr_factored_long <- selected_transcript_expr_log |>
-  pivot_longer(cols=-transcript_id,
-             names_to = 'sample_id',
-             values_to = 'expression_value') |>
-  mutate(sample_id = factor(sample_id,
-                            levels=levels_sample),
-         transcript_id = factor(transcript_id,
-                           levels=levels_transcript))
+  pivot_longer(
+    cols = -transcript_id,
+    names_to = "sample_id",
+    values_to = "expression_value"
+  ) |>
+  mutate(
+    sample_id = factor(sample_id,
+      levels = levels_sample
+    ),
+    transcript_id = factor(transcript_id,
+      levels = levels_transcript
+    )
+  )
 
 expr_factored_long
 ```
@@ -109,26 +123,34 @@ color_vector <- colorRampPalette(c("darkblue", "turquoise", "green", "yellow"))(
 
 # Plot heatmap via geom_tile()
 hm <- expr_factored_long |>
-  ggplot(aes(y=transcript_id, x=sample_id, fill=expression_value)) +
+  ggplot(aes(y = transcript_id, x = sample_id, fill = expression_value)) +
   geom_tile() +
   scale_fill_gradientn(colors = color_vector) +
   theme_minimal() +
-  theme(axis.text.y = element_text(size = 6),
-        axis.text.x = element_blank())
+  theme(
+    axis.text.y = element_text(size = 6),
+    axis.text.x = element_blank()
+  )
 
 # Create dendrogram plots
 dendro_transcript <- transcript_clus |>
   as.dendrogram() |>
-  ggdendrogram(rotate = TRUE,
-               size=7) +
-  theme(axis.text.y = element_blank(),
-        axis.text.x = element_blank())
+  ggdendrogram(
+    rotate = TRUE,
+    size = 7
+  ) +
+  theme(
+    axis.text.y = element_blank(),
+    axis.text.x = element_blank()
+  )
 
 dendro_sample <- sample_clus |>
   as.dendrogram() |>
   ggdendrogram(rotate = FALSE) +
-  theme(axis.text.y = element_blank(),
-      axis.text.x = element_blank())
+  theme(
+    axis.text.y = element_blank(),
+    axis.text.x = element_blank()
+  )
 ```
 
 ## Combine plots
@@ -141,13 +163,16 @@ p_empty <- ggplot()
 
 # Plot final combined plot
 fig <- subplot(dendro_sample, p_empty, hm, dendro_transcript,
-        nrows = 3,
-        heights = c(0.1, 0.89, 0.01),
-        widths = c(0.9, 0.1),
-        margin = 0.01) |>
-  layout(title= 'Combined plots',
-         height= 600,
-         width = 1200)
+  nrows = 3,
+  heights = c(0.1, 0.89, 0.01),
+  widths = c(0.9, 0.1),
+  margin = 0.01
+) |>
+  layout(
+    title = "Combined plots",
+    height = 600,
+    width = 1200
+  )
 
 saveWidget(fig, file = here("results/heatmap_dendrogram.html"))
 ```
