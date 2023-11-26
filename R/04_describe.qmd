@@ -135,30 +135,42 @@ ggsave(here("results/04_ethnicity_dist.png"), race_bar)
 
 ```{r}
 smoking_s_bar <- data |>
+  mutate(
+    smoking_status = if_else(
+      is.na(smoking_status),
+      "NA",
+      str_to_title(smoking_status)
+    ),
+    smoking_status = factor(
+      smoking_status,
+      c("Current", "Former", "Never", "NA")
+    )
+  ) |>
   ggplot(mapping = aes(
     x = smoking_status,
     fill = smoking_status
   )) +
   geom_bar(show.legend = FALSE) +
   geom_text(
-    aes(
-      label = ..count..
-    ),
+    aes(label = after_stat(count)),
     stat = "count",
     vjust = 1.5,
     colour = "black"
   ) +
   labs(
     title = "Distribution of type of smokers",
-    y = "",
+    y = "Count",
+    x = "Smoking Status",
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   ) +
-  # scale_fill_brewer(palette = "Set2") + Doesnt color NAs
+  # scale_fill_brewer(palette = "Set1") + #Doesnt color NAs
   theme(
     panel.grid.major.x = element_blank()
-  )
+  ) +
+  theme_minimal()
 
 smoking_s_bar
+ggsave(here("results/04_smoking_status_dist.png"), smoking_s_bar)
 ```
 
 ```{r}
@@ -172,16 +184,13 @@ race_bar_faceted
 
 ```{r}
 yearly_smoke <- data |>
-  mutate(smoking_history_pack_years = case_when(
-    smoking_history_pack_years == "10>PY" ~ 10,
-    TRUE ~ as.numeric(smoking_history_pack_years)
-  )) |>
-  ggplot(aes(y = smoking_history_pack_years)) +
+  ggplot(aes(x = after_stat(density), y = smoking_history_pack_years)) +
+  geom_density(alpha = 0.5, alpha = 0.6, fill = "#FF5733") +
   geom_histogram(
     binwidth = 5,
-    fill = "#FF5733",
+    fill = "white",
     color = "black",
-    alpha = 0.6
+    alpha = 0.2
   ) +
   theme_minimal() +
   coord_flip() +
@@ -193,7 +202,7 @@ yearly_smoke <- data |>
   )
 
 yearly_smoke
-
+ggsave(here("results/04_smoking_status_dist.png"), smoking_s_bar)
 ```
 
 There are 30 patients that haven't specified the amount of packs they smoke a year (NA).
