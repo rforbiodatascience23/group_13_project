@@ -138,31 +138,6 @@ expr_trans_no_zero <- expr_log_trans |>
 For each individual transcript we split the expression values into two states, which should correspond to a high and low expression state.
 
 ```{r kmeans-chunk-slow-takes-time}
-# Clustering function that clust
-kmeans_cluster_row <- function(transcript_expr_data) {
-  # Transpose tibble to fit into the kmeans function
-  transposed_tibble <- transcript_expr_data |>
-    pivot_longer(
-      cols = everything(),
-      names_to = "sample_id"
-    )
-
-  # Clustering
-  cl <- transposed_tibble |>
-    select(value) |>
-    kmeans(centers = 2)
-
-  # Chain clustering states to each expression value
-  cluster_tibble <- transposed_tibble |>
-    mutate(cluster_int = cl$cluster) |>
-    pivot_wider(
-      names_from = sample_id,
-      values_from = value
-    )
-
-  return(cluster_tibble)
-}
-
 # Perform kmeans clustering on each transcript
 clust_data <- expr_trans_no_zero |>
   group_by(transcript_id) |>
@@ -182,19 +157,12 @@ clust_data_long <- clust_data |>
     values_to = "expression_value"
   ) |>
   drop_na()
-
-clust_data_long
 ```
 
 ## Select transcripts according to requirements
 
 ```{r}
-# Average expression fold change check
-fold_change <- function(val_1, val_2) {
-  fold_change <- max(val_1, val_2) - min(val_1, val_2)
-  return(fold_change)
-}
-
+# Calculate average fold change in expression
 avg_fold_change <- clust_data_long |>
   group_by(transcript_id, cluster_int) |>
   summarize(avg_expression = mean(expression_value)) |>
@@ -223,7 +191,6 @@ above_fold_change_threshold <- avg_fold_change |>
   filter(!fold_change == Inf) |>
   filter(fold_change > 3) |>
   pull(transcript_id)
-
 
 # 6 expression values in each state check
 count_clusters <- clust_data_long |>

@@ -50,3 +50,36 @@ check_and_install_libraries <- function(dir_path) {
   }
   print("All required libraries checked and installed.")
 }
+
+
+# Clustering function to perform kmeans clustering on a row of expression values
+kmeans_cluster_row <- function(transcript_expr_data) {
+  # Transpose tibble to fit into the kmeans function
+  transposed_tibble <- transcript_expr_data |>
+    pivot_longer(
+      cols = everything(),
+      names_to = "sample_id"
+    )
+
+  # Clustering
+  cl <- transposed_tibble |>
+    select(value) |>
+    kmeans(centers = 2)
+
+  # Chain clustering states to each expression value
+  cluster_tibble <- transposed_tibble |>
+    mutate(cluster_int = cl$cluster) |>
+    pivot_wider(
+      names_from = sample_id,
+      values_from = value
+    )
+
+  return(cluster_tibble)
+}
+
+
+# Average expression fold change check
+fold_change <- function(val_1, val_2) {
+  fold_change <- max(val_1, val_2) - min(val_1, val_2)
+  return(fold_change)
+}
