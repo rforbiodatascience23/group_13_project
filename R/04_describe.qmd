@@ -100,6 +100,7 @@ ggsave(here("results/04_patient_gender_count_age_dist.png"), gender_bar + gender
 ## Ethnicity
 ```{r}
 race_bar <- data |>
+  mutate(sex = str_to_title(sex)) |>
   ggplot(mapping = aes(
     x = ethnicity,
     fill = sex
@@ -111,22 +112,23 @@ race_bar <- data |>
   labs(
     title = "Distribution of ethnicities",
     subtitle = "Stratified on gender",
+    x = "Ethnicity",
     y = "Count",
+    fill = "Gender",
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   ) +
   theme(
     panel.grid.major.x = element_blank()
-  )
-
-race_bar +
+  ) +
   geom_text(
-    aes(label = ..count..),
+    aes(label = after_stat(count)),
     stat = "count",
     vjust = -0.3,
     colour = "black",
     position = position_dodge(width = 0.9)
   )
 
+ggsave(here("results/04_ethnicity_dist.png"), race_bar)
 ```
 
 ## Smoking status
