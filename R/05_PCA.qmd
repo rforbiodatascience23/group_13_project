@@ -333,11 +333,11 @@ mean_data_pca1 <- data |>
   )
 
 
-ggplot(
-  mean_data_pca1, 
+plot_boxplot_pc1_cluster <- mean_data_pca1 |>
+  ggplot( 
        aes(
          sample_cluster,
-         expression,
+         log10(expression),
          fill = trancrips,
          dodge = trancrips)) +
   stat_boxplot(
@@ -349,14 +349,19 @@ ggplot(
   labs(
     title = "Trancript express acroos Clusters",
     x = "Pantien cluters by HC",
-    y = "Trancript Expression",
+    y = "Trancript Expression log10",
     color = "Trancrips",
     caption = "Data from doi.org/10.1038/s42003-021-01842-7"
     ) +
   theme(
     plot.caption.position = "plot",
     )
+plot_boxplot_pc1_cluster
 
+ggsave(
+  filename = here("results/05_PCA_DET_boxplot_pc1_cluster.png"),
+  plot = plot_boxplot_pc1_cluster
+)
 ```
 
 #### DET cluster PC2
@@ -380,16 +385,20 @@ mean_data_pca2 <- data |>
   )
 
 
-ggplot(
-  mean_data_pca2, 
+plot_boxplot_pc2_cluster <- mean_data_pca2 |>
+  ggplot(  
        aes(
          sample_cluster,
-         expression,
+         log2(expression),
          fill = trancrips,
          dodge = trancrips)) +
   stat_boxplot(
     geom ='errorbar') +
-  geom_boxplot() +
+  geom_boxplot(
+    outlier.shape = NA
+    )  +
+  scale_y_continuous(
+    limits = c(-10,5) ) +
   scale_x_discrete(
         labels = c("Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4")
         ) +
@@ -403,6 +412,13 @@ ggplot(
   theme(
     plot.caption.position = "plot",
     )
+
+plot_boxplot_pc2_cluster
+
+ggsave(
+  filename = here("results/05_PCA_DET_boxplot_pc1_cluster.png"),
+  plot = plot_boxplot_pc2_cluster
+)
 ```
 
 #### DET single box PC1
