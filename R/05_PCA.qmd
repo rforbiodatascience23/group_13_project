@@ -73,7 +73,7 @@ plot_pca_ethnicity <- pca_fit |>
   augment(data)  |>
   ggplot(
     aes(
-      x = .fittedPC3,
+      x = .fittedPC1,
       y = .fittedPC2, 
       )) + 
   geom_point(aes_string(
@@ -140,6 +140,7 @@ plot_pca_one_feature <- pca_fit |>
     caption = "Data from doi.org/10.1038/s42003-021-01842-7")+
   theme(plot.caption.position = "plot")
 
+plot_pca_one_feature
 
 ggsave(
   filename = here("results/05_PCA_one_feature.png"),
@@ -350,7 +351,7 @@ plot_boxplot_pc1_cluster <- mean_data_pca1 |>
     title = "Trancript express acroos Clusters",
     x = "Pantien cluters by HC",
     y = "Trancript Expression log10",
-    color = "Trancrips",
+    fill = "Trancrips",
     caption = "Data from doi.org/10.1038/s42003-021-01842-7"
     ) +
   theme(
@@ -406,7 +407,7 @@ plot_boxplot_pc2_cluster <- mean_data_pca2 |>
     title = "Trancript express acroos Clusters",
     x = "Pantien cluters by HC",
     y = "Trancript Expression",
-    color = "Trancrips",
+    fill = "Trancrips",
     caption = "Data from doi.org/10.1038/s42003-021-01842-7"
     ) +
   theme(
