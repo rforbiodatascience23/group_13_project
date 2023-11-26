@@ -74,7 +74,8 @@ gender_age_box <- data |>
   ggtitle("Violinplot of the age distribution") +
   labs(
     subtitle = "Stratified on gender",
-    y = ""
+    y = "",
+    caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   ) +
   theme(
     panel.grid.major.x = element_blank()
@@ -98,7 +99,8 @@ race_bar <- data |>
   labs(
     title = "Distribution of ethnicities",
     subtitle = "Stratified on gender",
-    y = ""
+    y = "",
+    caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   ) +
   theme(
     panel.grid.major.x = element_blank()
@@ -134,7 +136,8 @@ smoking_s_bar <- data |>
   ) +
   labs(
     title = "Distribution of type of smokers",
-    y = ""
+    y = "",
+    caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   ) +
   # scale_fill_brewer(palette = "Set2") + Doesnt color NAs
   theme(
@@ -171,7 +174,8 @@ yearly_smoke <- data |>
   labs(
     title = "Histogram of Packs Smoked Per Year",
     x = "",
-    y = "Packs per Year"
+    y = "Packs per Year",
+    caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   )
 
 yearly_smoke
@@ -226,7 +230,8 @@ ridgeline_plot <- data |>
   labs(
     title = "Overall Survival Months by Treatment type",
     x = "Overall Survival Months",
-    y = ""
+    y = "",
+    caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   )
 
 
@@ -290,7 +295,8 @@ survival_boxplot_jitter <- data |>
     x = "Status at Time of Last Follow-Up",
     y = "Smoking History (Packs per Year)",
     fill = "Survival Status",
-    color = "Survival Status"
+    color = "Survival Status",
+    caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   ) +
   theme(legend.position = "bottom")
 
