@@ -41,7 +41,8 @@ gender_bar <- data |>
     fill = sex
   )) +
   geom_bar(
-    show.legend = FALSE
+    show.legend = FALSE,
+    colour = "black"
   ) +
   geom_bar(show.legend = FALSE) +
   geom_text(
@@ -61,7 +62,8 @@ gender_bar <- data |>
   theme(
     panel.grid.major.x = element_blank()
   ) +
-  theme_minimal()
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set3")
 
 gender_age_box <- data |>
   mutate(sex = str_to_title(sex)) |>
@@ -76,7 +78,7 @@ gender_age_box <- data |>
   ) +
   geom_jitter(
     color = "black",
-    width = 0.25,
+    width = 0.15,
     alpha = 0.2,
     size = 4,
     show.legend = FALSE
@@ -91,7 +93,8 @@ gender_age_box <- data |>
   theme(
     panel.grid.major.x = element_blank()
   ) +
-  theme_minimal()
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set3")
 
 gender_bar + gender_age_box
 ggsave(here("results/04_patient_gender_count_age_dist.png"), gender_bar + gender_age_box)
@@ -107,7 +110,8 @@ race_bar <- data |>
   )) +
   geom_bar(
     alpha = 0.8,
-    position = "dodge"
+    position = "dodge",
+    colour = "black"
   ) +
   labs(
     title = "Distribution of ethnicities",
@@ -126,8 +130,9 @@ race_bar <- data |>
     vjust = -0.3,
     colour = "black",
     position = position_dodge(width = 0.9)
-  )
-
+  ) +
+  scale_fill_brewer(palette = "Set3")
+race_bar
 ggsave(here("results/04_ethnicity_dist.png"), race_bar)
 ```
 
@@ -150,7 +155,7 @@ smoking_s_bar <- data |>
     x = smoking_status,
     fill = smoking_status
   )) +
-  geom_bar(show.legend = FALSE) +
+  geom_bar(show.legend = FALSE, colour = "black") +
   geom_text(
     aes(label = after_stat(count)),
     stat = "count",
@@ -158,12 +163,12 @@ smoking_s_bar <- data |>
     colour = "black"
   ) +
   labs(
-    title = "Distribution of type of smokers",
-    y = "Count",
+    title = "Count distribution of type of smokers",
+    y = "",
     x = "Smoking Status",
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   ) +
-  # scale_fill_brewer(palette = "Set1") + #Doesnt color NAs
+  scale_fill_brewer(palette = "Set3") +
   theme(
     panel.grid.major.x = element_blank()
   ) +
@@ -184,47 +189,26 @@ race_bar_faceted
 
 ```{r}
 yearly_smoke <- data |>
-  ggplot(aes(x = after_stat(density), y = smoking_history_pack_years)) +
-  geom_density(alpha = 0.5, alpha = 0.6, fill = "#FF5733") +
+  ggplot(aes(x = smoking_history_pack_years, y = after_stat(density))) +
   geom_histogram(
     binwidth = 5,
     fill = "white",
-    color = "black",
-    alpha = 0.2
+    color = "black"
   ) +
+  geom_density(alpha = 0.4, fill = "#8DD3C7") +
   theme_minimal() +
-  coord_flip() +
   labs(
-    title = "Histogram of Packs Smoked Per Year",
-    x = "",
-    y = "Packs per Year",
+    title = "Distribution of Packs Smoked Per Year",
+    x = "Packs per Year",
+    y = "",
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   )
 
 yearly_smoke
-ggsave(here("results/04_smoking_status_dist.png"), smoking_s_bar)
+ggsave(here("results/04_smoking_status_dist.png"), yearly_smoke)
 ```
 
-There are 30 patients that haven't specified the amount of packs they smoke a year (NA).
-
-```{r}
-data <- data |>
-  mutate(
-    treatment_group = case_when(
-      is.na(chemotherapy_neo_adjuvant_yes_no) | is.na(chemotherapy_yes_no) | is.na(radiation_yes_no) ~ "Data Missing",
-      chemotherapy_neo_adjuvant_yes_no == "yes" & chemotherapy_yes_no == "yes" & radiation_yes_no == "yes" ~ "All Treatments",
-      chemotherapy_neo_adjuvant_yes_no == "yes" & chemotherapy_yes_no == "yes" & radiation_yes_no == "no" ~ "Chemo with Neoadjuvants",
-      chemotherapy_neo_adjuvant_yes_no == "no" & chemotherapy_yes_no == "yes" & radiation_yes_no == "yes" ~ "Chemo and Radiation",
-      chemotherapy_neo_adjuvant_yes_no == "no" & chemotherapy_yes_no == "yes" & radiation_yes_no == "no" ~ "Chemo Only",
-      chemotherapy_neo_adjuvant_yes_no == "no" & chemotherapy_yes_no == "no" & radiation_yes_no == "yes" ~ "Radiation Only",
-      chemotherapy_neo_adjuvant_yes_no == "no" & chemotherapy_yes_no == "no" & radiation_yes_no == "no" ~ "No treatment",
-      TRUE ~ "Other Combinations"
-    )
-  ) |>
-  drop_na(overall_survival_months) # Drop NA values for the variable to be plotted
-
-```
-
+  
 Created new column for overview of treatment type.
 
 ```{r}
@@ -255,12 +239,14 @@ ridgeline_plot <- data |>
     x = "Overall Survival Months",
     y = "",
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
-  )
+  ) +
+  geom_segment(aes(x = 1, xend = 2, y = ))
 
 
 # Display the plot
 ridgeline_plot
 
+ggsave(here("results/04_treatment_ridgeplot.png"), ridgeline_plot)
 ```
 
 ```{r}
@@ -269,26 +255,46 @@ t_result <- t.test(smoking_history_pack_years ~ status_at_time_of_last_follow_up
   data = data, na.rm = TRUE
 )
 
+# Extract the coefficient and exponent of the scientific notation
+t_result |>
+  tidy() |>
+  select(p.value) |>
+  log10()
+
+expo <- coeff |>
+  round() |>
+  as.integer()
+
+scientific_label <- str_glue("p == {round(10^(coeff - expo), 2)}e{expo}")
+
+# Using expression to create the label
+label_expression <- parse(text = scientific_label)
+
+# Y position for the top of the comparison bar, a bit above the highest box
+y_position <- max(boxplot(
+  smoking_history_pack_years ~ status_at_time_of_last_follow_up,
+  data = data,
+  plot = FALSE
+)$stats) + 2
+
 # Calculate means
 means <- data |>
-  mutate(smoking_history_pack_years = case_when(
-    smoking_history_pack_years == "10>PY" ~ 10,
-    TRUE ~ as.numeric(smoking_history_pack_years)
-  )) |>
+  drop_na(status_at_time_of_last_follow_up) |>
+  mutate(
+    status_at_time_of_last_follow_up = str_to_title(status_at_time_of_last_follow_up)
+  ) |>
   group_by(status_at_time_of_last_follow_up) |>
-  summarise(
+  reframe(
     mu = mean(smoking_history_pack_years, na.rm = TRUE),
-    label = sprintf("mean[%s] == %0.2f", status_at_time_of_last_follow_up, mu)
+    label = str_glue("\u03BC[{status_at_time_of_last_follow_up}] == {round(mu, 2)} ")
   ) |>
   unique()
-means
 
 survival_boxplot_jitter <- data |>
-  mutate(smoking_history_pack_years = case_when(
-    smoking_history_pack_years == "10>PY" ~ 10,
-    TRUE ~ as.numeric(smoking_history_pack_years)
-  )) |>
-  drop_na(smoking_history_pack_years) |>
+  drop_na(status_at_time_of_last_follow_up) |>
+  mutate(
+    status_at_time_of_last_follow_up = str_to_title(status_at_time_of_last_follow_up)
+  ) |>
   ggplot(aes(
     x = status_at_time_of_last_follow_up,
     y = smoking_history_pack_years
@@ -321,29 +327,29 @@ survival_boxplot_jitter <- data |>
     color = "Survival Status",
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   ) +
-  theme(legend.position = "bottom")
-
-
-survival_boxplot_jitter +
-  geom_point(
-    data = means,
-    mapping = aes(
-      x = status_at_time_of_last_follow_up,
-      y = mu
-    ),
-    color = "purple",
-    size = 3
+  theme(legend.position = "bottom") +
+  # Add the horizontal segment (bar)
+  geom_segment(aes(x = 1, xend = 2, y = y_position, yend = y_position),
+    linewidth = 0.5
   ) +
+  # Add two vertical segments (the little ones connecting the bar to the boxes)
+  geom_segment(aes(x = 1, xend = 1, y = y_position - 0.5, yend = y_position),
+    linewidth = 0.5
+  ) +
+  geom_segment(aes(x = 2, xend = 2, y = y_position - 0.5, yend = y_position),
+    linewidth = 0.5
+  ) +
+  # P-value label
+  geom_label(aes(x = 1.5, y = y_position + 1, label = scientific_label),
+    parse = TRUE, fill = "white"
+  ) +
+  # Mean points and labels
+  geom_point(data = means, aes(x = status_at_time_of_last_follow_up, y = mu), color = "red", size = 3) +
   geom_label(
-    data = means,
-    mapping = aes(
-      x = status_at_time_of_last_follow_up,
-      y = mu,
-      label = label
-    ),
-    parse = TRUE,
-    fill = "white",
-    hjust = 0.1,
-    vjust = 0.1
+    data = means, aes(x = status_at_time_of_last_follow_up, y = mu + 1, label = label),
+    parse = TRUE, fill = "white", hjust = 0.1, vjust = 0.1
   )
+survival_boxplot_jitter
+
+ggsave(here("results/04_smoking_history_survival_status.png"), survival_boxplot_jitter)
 ```
