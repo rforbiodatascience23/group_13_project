@@ -13,7 +13,7 @@ editor: visual
 library("tidyverse")
 library("here")
 library("broom")
-library("limma")
+library("ggrepel")
 ```
 
 ## Load data
@@ -34,22 +34,26 @@ data <- data |>
 ```{r}
 # Extract the expression data
 expression_data <- data |>
-  select(survival_status, 32:ncol(data))
+  select(sample_id, survival_status, 32:ncol(data))
+```
 
-# Log2 transform the FPKM expression data
-expr_log <- expression_data |>
-  mutate(across(-survival_status, ~ log2(. + 1)))
-
-
-
-# Pivot longer
-expr_log_long <- expr_log |>
+```{r}
+# Convert expression data into long format
+expr_long <- expression_data |>
   pivot_longer(
-    cols = -survival_status,
+    cols = -c(sample_id, survival_status),
     names_to = "gene",
-    values_to = "log2_expr_level"
+    values_to = "expr_level"
   )
 
+# Log2 transform data
+expr_log_long <- expr_long |>
+  mutate(
+    log2_expr_level = log2(expr_level + 1)
+  )
+```
+
+```{r}
 # Nest the data
 expr_log_long_nested <- expr_log_long |>
   group_by(gene) |>
@@ -78,12 +82,12 @@ expr_log_long_nested <- expr_log_long_nested |>
     )
   ))
 
-# Unnest
+# Unnest the data
 expr_estimates <- expr_log_long_nested |>
   unnest(model_object_tidy) |>
   drop_na(p.value)
 
-#
+# Extract columns of
 expr_estimates <- expr_estimates |>
   filter(term == "survival_status") |>
   select(gene, p.value, estimate, conf.low, conf.high) |>
@@ -92,7 +96,7 @@ expr_estimates
 
 expr_estimates <- expr_estimates |>
   mutate(
-    # q.value = p.adjust(p.value),
+    q.value = p.adjust(p.value),
     is_significant = case_when(
       p.value <= 10^(-3) ~ "yes",
       p.value > 10^(-3) ~ "no"
@@ -108,6 +112,9 @@ expr_estimates |>
 ```{r}
 pl1 <- expr_estimates |>
   filter(is_significant == "yes") |>
+  mutate(
+    gene = str_remove_all(gene, "_NM_.*")
+  ) |>
   ggplot(aes(
     x = estimate,
     y = fct_reorder(gene, estimate),
@@ -127,7 +134,7 @@ pl1 <- expr_estimates |>
 pl1
 ggsave(here("results/07_associated_genes_CI.png"), pl1)
 
-library("ggrepel")
+
 pl2 <- expr_estimates |>
   mutate(
     gene = str_remove_all(gene, "_NM_.*"),
@@ -143,7 +150,7 @@ pl2 <- expr_estimates |>
     label = lbl
   )) +
   geom_point(
-    size = 1,
+    size = 0.5,
     alpha = 0.5
   ) +
   geom_text_repel(
@@ -157,11 +164,12 @@ pl2 <- expr_estimates |>
   ) +
   labs(
     x = "Estimates",
-    y = "-log10(p)",
+    y = bquote(-log[10](p)),
     title = "Genes Associated with Small Cell Lung Cancer",
-    subtitle = bquote("Genes highlighted in turquoise had a p-value < " * 10^-3),
+    subtitle = bquote("Genes highlighted in red had a p-value < " * 10^-3),
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
-  )
+  ) +
+  scale_color_manual(values = c("black", "red"))
 pl2
 ggsave(here("results/07_associated_genes_vulcano_plot.png"), pl2)
 ```
