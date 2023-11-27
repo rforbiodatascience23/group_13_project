@@ -93,4 +93,5 @@ hmplot <- ggplot() +
 
 ggsave(here("results/06_heatmap_plot.png"), hmplot)
 
+hmplot
 ```
