@@ -73,25 +73,41 @@ sample_clus <- expr_matrix |>
 hm <- hmReady(expr_matrix, colclus = sample_clus, rowclus = transcript_clus)
 
 # Setup color vector for beautiful colors
-color_vector <- colorRampPalette(c("darkblue", "turquoise", "green", "yellow"))(n = 100)
+color_vector <- c("#5154A5", "#5154A5", "#5154A5",
+                  "#41B6E8", "#41B6E8",
+                  "#69BD44", "#69BD44", "#69BD44",
+                  "#FCE349", "#FCE349", "#FCE349", "#FCE349", "#FCE349", "#FCE349", "#FCE349", "#FCE349")
+
+max_expr_val <- selected_transcript_expr_log |>
+  group_by(transcript_id) |>
+  nest() |>
+  mutate(max_val_transcript = unlist(map(.x = data,
+                                     .f = ~max(.x)))) |>
+  pull(max_val_transcript) |>
+  max()
 
 # plot the heatmap
 hmplot <- ggplot() +
   geom_tile(data = hm, aes(x = x, y = y, fill = value)) +
-  scale_fill_gradientn(
-    colors = color_vector,
-    values = c(0, 0.25, 1)
-  ) +
   scale_y_reverse() +
   geom_dendro(sample_clus, ylim = c(0, -40), axis.labels = FALSE) +
   geom_dendro(transcript_clus, xlim = c(0, -30), pointing = "side", axis.labels = FALSE) +
-  theme(
-    axis.label.x = element_blank(),
-    axis.label.y = element_blank()
-  ) +
-  theme_minimal()
+  scale_fill_gradientn(colors = color_vector,
+                       breaks = c(0, 7, max_expr_val)) +
+  labs(fill = 'Log2(1 + FPKM)',
+       title = 'Heatmap of expression values',
+       subtitle = 'Hierarchical clustering of samples (x-axis) and transcript (y-axis)',
+       caption = "Data from DOI: https://doi.org/10.1038/nature14664") +
+  theme_minimal() +
+  theme(panel.grid = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank())
 
 ggsave(here("results/06_heatmap_plot.png"), hmplot)
 
+# Printing plot
 hmplot
 ```
