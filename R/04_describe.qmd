@@ -15,6 +15,7 @@ library("patchwork")
 library("viridis")
 library("plotly")
 library("ggridges")
+library("broom")
 ```
 
 ## load data
@@ -256,7 +257,7 @@ t_result <- t.test(smoking_history_pack_years ~ status_at_time_of_last_follow_up
 )
 
 # Extract the coefficient and exponent of the scientific notation
-t_result |>
+coeff <- t_result |>
   tidy() |>
   select(p.value) |>
   log10()
