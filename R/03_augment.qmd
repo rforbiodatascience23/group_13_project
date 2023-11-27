@@ -286,6 +286,6 @@ select_transcript_meta <- data_treatment |>
 # Save augmented data
 write_tsv(
   select_transcript_meta,
-  here("data/03_dat_augment2.tsv")
+  here("data/03_dat_augment.tsv")
 )
 ```
