@@ -11,19 +11,19 @@ editor: visual
 
 ```{r}
 library("tidyverse")
+library("ggrepel")
 library("broom")
 library("here")
 library("readxl")
 library("cowplot")
 source(here("R/99_proj_func.R"))
-
 ```
 
 ## Load data
 
 ```{r}
 # Load data
-data <- read_tsv(here("data/03_dat_augment.tsv"))
+data <- read_tsv(here("data/03_dat_augment2.tsv"))
 ```
 
 ## PCA
@@ -47,7 +47,7 @@ pca_fit <- log2(input_pca + 1) |>
 Creating labels for PC and variances explanation
 
 ```{r}
-# Crate labels for axis
+# Create labels for axis
 pca_plot_axes_labels <- pca_fit |>
   tidy("eigenvalues") |>
   mutate(
@@ -58,6 +58,10 @@ pca_plot_axes_labels <- pca_fit |>
     )
   ) |>
   pull("lbl")
+
+# Printing labels
+pca_plot_axes_labels |>
+  head(2)
 ```
 
 ### Meta data in PCA
@@ -96,30 +100,25 @@ pca_meta_data <- function(to_plot) {
     theme(plot.caption.position = "plot")
   plot_pca_ethnicity
 }
-
-
-
-
-
 ```
 
-#### plot all
+#### Plot all
 
 None of the meta data seems to explain the subgroups.
 
 ```{r}
-
+# Plot samples against all metadata features
 for (x in colnames(data[2:33])) {
   print(pca_meta_data(x))
 }
 ```
 
-#### One prettie one to show
+We found that none of the metadata feature is explained in the PCA space
+
+#### Plotting survival time to see an example of no correlation in PCA space
 
 ```{r}
-
-
-plot_pca_hc <- pca_fit |>
+plot_survival_pca <- pca_fit |>
   augment(data) |>
   filter(!is.na(survival_time)) |>
   ggplot(
@@ -139,23 +138,21 @@ plot_pca_hc <- pca_fit |>
   geom_vline(xintercept = 0) +
   geom_hline(yintercept = 0) +
   labs(
-    title = "PCA: Paitiens clusters by Trancriptpics",
+    title = "PCA: Patient clusters by Trancripts",
     x = pluck(pca_plot_axes_labels, 1),
     y = pluck(pca_plot_axes_labels, 2),
-    shape = "Pantient HC",
-    color = "Survival Catagorie",
+    color = "survival Time",
     caption = "Data from doi.org/10.1038/s42003-021-01842-7"
   ) +
   theme(plot.caption.position = "plot")
-plot_pca_hc
 
-
+plot_survival_pca
 ```
 
 ### Eigenvalue
 
 ```{r}
-pca_fit |>
+eigen_explained <- pca_fit |>
   tidy("pcs") |>
   slice_head(n = 10) |>
   mutate(percent = round(percent * 100, digits = 2)) |>
@@ -180,6 +177,7 @@ pca_fit |>
   labs(
     title = "Eigenvalues for variance explaination",
     caption = "Data from doi.org/10.1038/s42003-021-01842-7",
+    y = "Explained variance (%)"
   ) +
   theme(
     panel.grid.minor.x = element_blank(),
@@ -187,7 +185,7 @@ pca_fit |>
     plot.caption = element_text(size = 10)
   )
 
-
+eigen_explained
 ```
 
 ### Feature in PCA space
@@ -197,13 +195,10 @@ arrow_style <- arrow(
   angle = 20, ends = "first", type = "closed", length = grid::unit(8, "pt")
 )
 
-library("ggrepel")
-
 # plot rotation matrix
 pca_fit |>
   tidy(matrix = "rotation") |>
   pivot_wider(names_from = "PC", names_prefix = "PC", values_from = "value") |>
-  arrange(desc(PC1)) |>
   slice(1:5) |>
   mutate(
     column = str_remove_all(column, "_NM_.*")
@@ -221,10 +216,9 @@ pca_fit |>
   theme_minimal_grid(12)
 ```
 
-### Plots of clusters in PCA
+#### Plotting hierarchical clusters in PCA
 
 ```{r}
-
 plot_pca_hc <- pca_fit |>
   augment(data) |>
   ggplot(
@@ -251,7 +245,7 @@ plot_pca_hc <- pca_fit |>
     x = pluck(pca_plot_axes_labels, 1),
     y = pluck(pca_plot_axes_labels, 2),
     shape = "Pantient HC",
-    color = "Samle by HC clustering",
+    color = "Sample by HC clustering",
     caption = "Data from doi.org/10.1038/s42003-021-01842-7"
   ) +
   theme(
@@ -313,7 +307,7 @@ ggplot(
 
 ```
 
-#### DET cluster PC1 
+#### DET cluster PC1
 
 ```{r}
 
@@ -413,7 +407,7 @@ ggplot(
   )
 ```
 
-#### DET single box PC1 
+#### DET single box PC1
 
 ```{r}
 
