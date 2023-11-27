@@ -1,0 +1,203 @@
+---
+title: "Small Cell Lung Cancer"
+author:
+- El Mehdi Baknine,  s194533
+- Jakob Frostholm Højgaard, s194527
+- Jonathan Dragestad Møller, s184243
+- Mikkel Niklas Rasmussen, s193518
+- Thomas Malthe Mølgaard Tams, s204540
+date: '2023-11-28'
+format:
+  revealjs:
+    theme: solarized
+    logo: dtu_logo.png
+    slide-number: TRUE
+    embed-resources: true
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library("tidyverse")
+library("here")
+```
+
+## Paper and data source {.smaller}
+**Title:** Comprehensive genomic profiles of small cell lung cancer, George J. et. al. (2015)  
+
+
+
+```{r out.width="80%",fig.align='center', margin= 0.1}
+knitr::include_graphics(here("doc/data_chart_2.png"))
+```
+
+
+::: {style="text-align: center; margin-top: 1em"}
+Purpose: Identify different small cell lung cancer profiles
+:::
+
+## Data set overview {.smaller}
+```{r read data_load, include = FALSE}
+#|eval: false
+data_load <- read_tsv(here("data/01_dat_load.tsv"),
+                      show_col_types = FALSE)
+data_clean <- read_tsv(here("data/02_dat_clean.tsv"),
+                       show_col_types = FALSE)
+data_aug <- read_tsv(here("data/03_dat_augment.tsv"),
+                     show_col_types = FALSE)
+```
+
+
+:::: {.columns}
+
+::: {.column width="30%"}
+::: {.fragment .fade-in}
+**Loading**  
+
+- Dimensions: `r dim(data_load)` 
+
+- 30 metadata
+
+- 31639 gene expression
+:::
+
+:::
+
+::: {.column width="30%"}
+::: {.fragment .fade-in}
+**Cleaning**  
+
+- New dimensions: `r dim(data_clean)`
+
+- Check for duplicates in SampleIDs
+
+- Clean weird variables
+
+- Check NAs 
+
+
+:::
+:::
+
+::: {.column width="30%"}
+::: {.fragment .fade-in}
+**Augmenting**  
+
+- New dimensions: `r dim(data_aug)`
+
+
+
+:::
+:::
+
+::::
+## Overview of metadata 1
+:::: {.columns}
+
+::: {.column width="50%"}
+```{r out.width="80%",fig.align='left'}
+knitr::include_graphics(here("results/04_ethnicity_dist.png"))
+```
+:::
+
+::: {.column width="50%"}
+::: {.fragment .fade-in}
+```{r out.width="80%",fig.align='right'}
+knitr::include_graphics(here("results/04_patient_gender_count_age_dist.png"))
+```
+
+:::
+:::
+::::
+## Overview of metadata 2
+:::: {.columns}
+
+::: {.column width="50%"}
+```{r out.width="200%",fig.align='center'}
+knitr::include_graphics(here("results/04_ethnicity_dist.png"))
+```
+:::
+
+::: {.column width="50%"}
+::: {.fragment .fade-in}
+```{r out.width="200%",fig.align='center'}
+knitr::include_graphics(here("results/04_patient_gender_count_age_dist.png"))
+```
+
+:::
+:::
+::::
+## Overview of metadata 3
+:::: {.columns}
+
+::: {.column width="50%"}
+```{r out.width="80%",fig.align='left'}
+knitr::include_graphics(here("results/04_ethnicity_dist.png"))
+```
+:::
+
+::: {.column width="50%"}
+::: {.fragment .fade-in}
+```{r out.width="80%",fig.align='left'}
+knitr::include_graphics(here("results/04_patient_gender_count_age_dist.png"))
+```
+
+:::
+:::
+::::
+## Overview of metadata 4
+:::: {.columns}
+
+::: {.column width="50%"}
+```{r out.width="80%",fig.align='center', fig.asp=2}
+knitr::include_graphics(here("results/04_ethnicity_dist.png"))
+```
+:::
+
+::: {.column width="50%"}
+::: {.fragment .fade-in}
+```{r out.width="80%",fig.align='center', fig.asp=2}
+knitr::include_graphics(here("results/04_patient_gender_count_age_dist.png"))
+```
+
+:::
+:::
+::::
+
+
+## Methods
+### submethod
+K-means 
+Hierchichal clustring 
+t-test : N0 : There is no significant difference between clusters.
+To get low-high expression signature
+
+
+## Results
+## Executable Code
+
+```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 10
+library(ggplot2)
+ggplot(mtcars, aes(hp, mpg, color = am)) +
+  geom_point() +
+  geom_smooth(formula = y ~ x, method = "loess")
+```
+
+
+## Plot1 {chalkboard-buttons="true"}
+```{r out.width="80%",fig.align='center'}
+knitr::include_graphics(here("results/07_associated_genes_CI.png"))
+```
+
+## Some exploratory data analysis
+```{r out.width="100%", fig.align='center'}
+knitr::include_graphics(here("results/07_associated_genes_vulcano_plot.png"))
+```
+
+
+
+
+## Conclusion {.smaller}
