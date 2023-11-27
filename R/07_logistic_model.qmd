@@ -169,7 +169,7 @@ pl1 <- expr_estimates |>
   labs(
     x = "Estimates (95%CIs)",
     y = "",
-    title = "Genes Associated with Cluster 4",
+    title = "Genes Associated with Cluster 1",
     caption = "Data from DOI:https://doi.org/10.1038/nature14664"
   )
 pl1
@@ -224,7 +224,7 @@ pl2 <- expr_estimates |>
   labs(
     x = "Estimates",
     y = bquote(-log[10](q)),
-    title = "Trancript Associated with Patient Cluster 4",
+    title = "Trancript Associated with Patient Cluster 1",
     subtitle = str_c("Trancripts highlighted in red had a p-adj. < 0.05 \n- green were also found in PCA"),
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   ) +
