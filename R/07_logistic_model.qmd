@@ -69,7 +69,7 @@ expr_log_long <- expr_long |>
 
 ```{r}
 # Mutate binary cluster x or not
-cluster_of_interest <- "Cluster_4"
+cluster_of_interest <- "Cluster_1"
 expr_log_long_clust <- expr_log_long |>
   mutate(
     cluster = case_when(
