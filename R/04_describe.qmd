@@ -1,14 +1,356 @@
 ---
-title: "04 - Describe data"
+title: "03 - Describe data"
 subtitle: "R for Bio Data Science"
 format: html
-author: Mikkel Niklas Rasmussen (s193518)
 date: "2023-11-14"
 editor: visual
 ---
 
 ## Load libraries
+
 ```{r}
 library("tidyverse")
 library("here")
+library("patchwork")
+library("viridis")
+library("plotly")
+library("ggridges")
+library("broom")
+```
+
+## load data
+
+```{r}
+data <- read_tsv(here("data/03_dat_augment.tsv"))
+```
+
+## Dataset dimensions
+
+```{r}
+dim(data)
+```
+
+The dataset has 81 observations and 18845 variables Each observation corresponds to a patient
+
+## Gender and age distribution
+
+```{r}
+gender_bar <- data |>
+  mutate(sex = str_to_title(sex)) |>
+  ggplot(mapping = aes(
+    x = sex,
+    fill = sex
+  )) +
+  geom_bar(
+    show.legend = FALSE,
+    colour = "black"
+  ) +
+  geom_bar(show.legend = FALSE) +
+  geom_text(
+    aes(
+      label = after_stat(count)
+    ),
+    stat = "count",
+    vjust = 1.5,
+    colour = "black"
+  ) +
+  labs(
+    title = "Amount of patients",
+    subtitle = "Stratified on gender",
+    y = "Count",
+    x = "Gender"
+  ) +
+  theme(
+    panel.grid.major.x = element_blank()
+  ) +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set3")
+
+gender_age_box <- data |>
+  mutate(sex = str_to_title(sex)) |>
+  ggplot(mapping = aes(
+    x = sex,
+    y = age,
+    fill = sex
+  )) +
+  geom_violin(
+    aes(fill = sex),
+    show.legend = FALSE
+  ) +
+  geom_jitter(
+    color = "black",
+    width = 0.15,
+    alpha = 0.2,
+    size = 4,
+    show.legend = FALSE
+  ) +
+  ggtitle("Violinplot of the age distribution") +
+  labs(
+    subtitle = "Stratified on gender",
+    y = "Age",
+    x = "Gender",
+    caption = "Data from DOI: https://doi.org/10.1038/nature14664"
+  ) +
+  theme(
+    panel.grid.major.x = element_blank()
+  ) +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set3")
+
+gender_bar + gender_age_box
+ggsave(here("results/04_patient_gender_count_age_dist.png"), gender_bar + gender_age_box)
+```
+
+## Ethnicity
+```{r}
+race_bar <- data |>
+  mutate(sex = str_to_title(sex)) |>
+  ggplot(mapping = aes(
+    x = ethnicity,
+    fill = sex
+  )) +
+  geom_bar(
+    alpha = 0.8,
+    position = "dodge",
+    colour = "black"
+  ) +
+  labs(
+    title = "Distribution of ethnicities",
+    subtitle = "Stratified on gender",
+    x = "Ethnicity",
+    y = "Count",
+    fill = "Gender",
+    caption = "Data from DOI: https://doi.org/10.1038/nature14664"
+  ) +
+  theme(
+    panel.grid.major.x = element_blank()
+  ) +
+  geom_text(
+    aes(label = after_stat(count)),
+    stat = "count",
+    vjust = -0.3,
+    colour = "black",
+    position = position_dodge(width = 0.9)
+  ) +
+  scale_fill_brewer(palette = "Set3")
+race_bar
+ggsave(here("results/04_ethnicity_dist.png"), race_bar)
+```
+
+## Smoking status
+
+```{r}
+smoking_s_bar <- data |>
+  mutate(
+    smoking_status = if_else(
+      is.na(smoking_status),
+      "NA",
+      str_to_title(smoking_status)
+    ),
+    smoking_status = factor(
+      smoking_status,
+      c("Current", "Former", "Never", "NA")
+    )
+  ) |>
+  ggplot(mapping = aes(
+    x = smoking_status,
+    fill = smoking_status
+  )) +
+  geom_bar(show.legend = FALSE, colour = "black") +
+  geom_text(
+    aes(label = after_stat(count)),
+    stat = "count",
+    vjust = 1.5,
+    colour = "black"
+  ) +
+  labs(
+    title = "Count distribution of type of smokers",
+    y = "",
+    x = "Smoking Status",
+    caption = "Data from DOI: https://doi.org/10.1038/nature14664"
+  ) +
+  scale_fill_brewer(palette = "Set3") +
+  theme(
+    panel.grid.major.x = element_blank()
+  ) +
+  theme_minimal()
+
+smoking_s_bar
+ggsave(here("results/04_smoking_status_dist.png"), smoking_s_bar)
+```
+
+```{r}
+race_bar_faceted <- race_bar +
+  facet_wrap(~smoking_status) +
+  labs(subtitle = "Stratified on gender and smoking status")
+race_bar_faceted
+```
+
+### Cigarette use
+
+```{r}
+yearly_smoke <- data |>
+  ggplot(aes(x = smoking_history_pack_years, y = after_stat(density))) +
+  geom_histogram(
+    binwidth = 5,
+    fill = "white",
+    color = "black"
+  ) +
+  geom_density(alpha = 0.4, fill = "#8DD3C7") +
+  theme_minimal() +
+  labs(
+    title = "Distribution of Packs Smoked Per Year",
+    x = "Packs per Year",
+    y = "",
+    caption = "Data from DOI: https://doi.org/10.1038/nature14664"
+  )
+
+yearly_smoke
+ggsave(here("results/04_smoking_status_dist.png"), yearly_smoke)
+```
+
+  
+Created new column for overview of treatment type.
+
+```{r}
+# Create the ridgeline plot
+ridgeline_plot <- data |>
+  # Remove the groups with no entries
+  filter(
+    treatment_group != "Radiation Only",
+    treatment_group != "All Treatments",
+    treatment_group != "Other Combinations"
+  ) |>
+  ggplot(mapping = aes(
+    x = overall_survival_months,
+    y = treatment_group,
+    fill = treatment_group
+  )) +
+  geom_density_ridges(alpha = 0.6) +
+  scale_fill_brewer(
+    palette = "Set3",
+    name = "Treatment type"
+  ) + # Choose a color palette
+  theme_ridges(center_axis_labels = TRUE) + # Use the theme specifically designed for ridgeline plots
+  theme(
+    text = element_text(size = 10)
+  ) + # Increase base text size for a larger appearance
+  labs(
+    title = "Overall Survival Months by Treatment type",
+    x = "Overall Survival Months",
+    y = "",
+    caption = "Data from DOI: https://doi.org/10.1038/nature14664"
+  ) +
+  geom_segment(aes(x = 1, xend = 2, y = ))
+
+
+# Display the plot
+ridgeline_plot
+
+ggsave(here("results/04_treatment_ridgeplot.png"), ridgeline_plot)
+```
+
+```{r}
+# Use t-test to investigate difference between groups
+t_result <- t.test(smoking_history_pack_years ~ status_at_time_of_last_follow_up,
+  data = data, na.rm = TRUE
+)
+
+# Extract the coefficient and exponent of the scientific notation
+coeff <- t_result |>
+  tidy() |>
+  select(p.value) |>
+  log10()
+
+expo <- coeff |>
+  round() |>
+  as.integer()
+
+scientific_label <- str_glue("p == {round(10^(coeff - expo), 2)}e{expo}")
+
+# Using expression to create the label
+label_expression <- parse(text = scientific_label)
+
+# Y position for the top of the comparison bar, a bit above the highest box
+y_position <- max(boxplot(
+  smoking_history_pack_years ~ status_at_time_of_last_follow_up,
+  data = data,
+  plot = FALSE
+)$stats) + 2
+
+# Calculate means
+means <- data |>
+  drop_na(status_at_time_of_last_follow_up) |>
+  mutate(
+    status_at_time_of_last_follow_up = str_to_title(status_at_time_of_last_follow_up)
+  ) |>
+  group_by(status_at_time_of_last_follow_up) |>
+  reframe(
+    mu = mean(smoking_history_pack_years, na.rm = TRUE),
+    label = str_glue("\u03BC[{status_at_time_of_last_follow_up}] == {round(mu, 2)} ")
+  ) |>
+  unique()
+
+survival_boxplot_jitter <- data |>
+  drop_na(status_at_time_of_last_follow_up) |>
+  mutate(
+    status_at_time_of_last_follow_up = str_to_title(status_at_time_of_last_follow_up)
+  ) |>
+  ggplot(aes(
+    x = status_at_time_of_last_follow_up,
+    y = smoking_history_pack_years
+  )) +
+  geom_violin(
+    aes(fill = status_at_time_of_last_follow_up),
+    na.rm = TRUE
+  ) +
+  geom_boxplot(
+    # aes(#fill = status_at_time_of_last_follow_up),
+    alpha = 0.2,
+    outlier.shape = NA,
+    width = 0.5
+  ) +
+  geom_jitter(
+    aes(color = status_at_time_of_last_follow_up),
+    width = 0.1,
+    alpha = 0.2,
+    size = 4
+  ) +
+  scale_fill_brewer(palette = "Set3") +
+  scale_color_brewer(palette = "Set1") +
+  theme_minimal() +
+  labs(
+    title = "Smoking History and Patient Survival Status",
+    subtitle = "Distribution of packs per year smoked across survival statuses",
+    x = "Status at Time of Last Follow-Up",
+    y = "Smoking History (Packs per Year)",
+    fill = "Survival Status",
+    color = "Survival Status",
+    caption = "Data from DOI: https://doi.org/10.1038/nature14664"
+  ) +
+  theme(legend.position = "bottom") +
+  # Add the horizontal segment (bar)
+  geom_segment(aes(x = 1, xend = 2, y = y_position, yend = y_position),
+    linewidth = 0.5
+  ) +
+  # Add two vertical segments (the little ones connecting the bar to the boxes)
+  geom_segment(aes(x = 1, xend = 1, y = y_position - 0.5, yend = y_position),
+    linewidth = 0.5
+  ) +
+  geom_segment(aes(x = 2, xend = 2, y = y_position - 0.5, yend = y_position),
+    linewidth = 0.5
+  ) +
+  # P-value label
+  geom_label(aes(x = 1.5, y = y_position + 1, label = scientific_label),
+    parse = TRUE, fill = "white"
+  ) +
+  # Mean points and labels
+  geom_point(data = means, aes(x = status_at_time_of_last_follow_up, y = mu), color = "red", size = 3) +
+  geom_label(
+    data = means, aes(x = status_at_time_of_last_follow_up, y = mu + 1, label = label),
+    parse = TRUE, fill = "white", hjust = 0.1, vjust = 0.1
+  )
+survival_boxplot_jitter
+
+ggsave(here("results/04_smoking_history_survival_status.png"), survival_boxplot_jitter)
 ```

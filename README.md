@@ -1,5 +1,13 @@
 # Group 13 project
 Repository containing the code for Group 13's project in the DTU R for Bio Data Science course.
+## Members
+| Name                                       | Student number | GitHub username |
+|-------------------------------------|------------------|------------------|
+| El Mehdi Baknine                           | s194533        | embaknine       |
+| Jakob Frostholm Højgaard                   |                | jackfriskDTU    |
+| Jonathan Dragestad Møller                  |                | JonathanDragestadM|
+| Mikkel Niklas Rasmussen                    | s193518        | mikkelnrasmussen|
+| Thomas Tams                                |                | thomas-tams-dtu |
 
 ## Data
 The data used in this project is from the article "_Comprehensive genomic profiles of small cell lung cancer_". The data can be found under "_Supplementary Data_" at the following link:
