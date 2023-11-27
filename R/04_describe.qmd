@@ -100,9 +100,14 @@ gender_age_box <- data |>
   ) +
   scale_fill_brewer(palette = "Set3")
 
-combined <- gender_bar + gender_age_box
-
 ggsave(here("results/04_patient_count.png"), plot = gender_age_box, height = 7.5, width = 10)
+
+combined <- gender_bar + gender_age_box &
+  theme_minimal() &
+  theme(
+    panel.grid.major.x = element_blank(),
+    text = element_text(size = 20)
+  )
 
 ggsave(here("results/04_patient_gender_count_age_dist.png"), plot = combined, bg = "transparent", height = 7.5, width = 10)
 
