@@ -106,4 +106,14 @@ file.rename(
   to = here("results/07_logistic_model.html")
 )
 
+## PRESENTATION
+quarto_render(
+  input = here("doc/presentation.qmd"),
+  output_file = "presentation.html"
+)
+
+file.rename(
+  from = here("R/presentation.html"),
+  to = here("doc/presentation.html")
+)
 ```
