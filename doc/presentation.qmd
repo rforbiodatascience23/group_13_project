@@ -39,7 +39,7 @@ library("here")
 
 ::: {.fragment .fade-left}
 *Loading:* <br/>
-- Data dimensions: 81 x 31669  <br/>
+- Dim: 81 x 31669  <br/>
 - 30 metadata  <br/>
 - 31639 gene expression
 
