@@ -136,21 +136,35 @@ expr_estimates <- expr_estimates |>
 
 expr_estimates |>
   filter(is_significant == "yes") |>
-  select(gene, q.value) |>
-  mutate(
-    gene = str_remove_all(gene, "_NM_.*")
-  ) |>
-  select(gene) |>
-  print(n = 102)
+  select(gene, q.value)
 ```
 
 ```{r}
+# Select 4 transcripts based on min and max values in
+# Select transcripts differentiating samples along PC1
+pca_1_features <- pca_fit |>
+  tidy(matrix = "rotation") |>
+  pivot_wider(names_from = "PC", names_prefix = "PC", values_from = "value") |>
+  select(column, PC1, PC2) |>
+  arrange(desc(abs(PC1))) |>
+  slice(1:13) |>
+  pull(column)
+
+# Select genes investigated in PCA
+select_genes <- data |>
+  select(sample_cluster, pca_1_features[1:3], pca_1_features[13]) |>
+  colnames()
+
 pl1 <- expr_estimates |>
   filter(is_significant == "yes") |>
   mutate(
-    gene = str_remove_all(gene, "_NM_.*")
+    lbl = case_when(
+      gene %in% select_genes ~ "prior",
+      .default = is_significant
+    ),
+    gene = str_remove_all(gene, "_NM_.*"),
   ) |>
-  group_by(gene) |>
+  group_by(gene, lbl) |>
   summarise(
     estimate = mean(estimate),
     conf.low = mean(conf.low),
@@ -160,7 +174,8 @@ pl1 <- expr_estimates |>
     x = estimate,
     y = fct_reorder(gene, estimate),
     xmin = conf.low,
-    xmax = conf.high
+    xmax = conf.high,
+    color = lbl
   )) +
   geom_vline(xintercept = 0) +
   geom_errorbarh() +
@@ -171,25 +186,19 @@ pl1 <- expr_estimates |>
     y = "",
     title = "Genes Associated with Cluster 1",
     caption = "Data from DOI:https://doi.org/10.1038/nature14664"
+  ) +
+  theme(
+    text = element_text(size = 20),
+    legend.position = "none"
   )
 pl1
-ggsave(here("results/07_associated_genes_CI.png"), pl1, height = 11, width = 5)
-
-# Select 4 transcripts based on min and max values in
-four_transcripts <- pca_fit |>
-  tidy(matrix = "rotation") |>
-  pivot_wider(names_from = "PC", names_prefix = "PC", values_from = "value") |>
-  filter(PC1 == min(PC1) |
-    PC1 == max(PC1) |
-    PC2 == min(PC2) |
-    PC2 == max(PC2)) |>
-  pull(column)
+ggsave(here("results/07_associated_genes_CI.png"), pl1, height = 19, width = 8)
 
 
 pl2 <- expr_estimates |>
   mutate(
     is_significant = case_when(
-      gene %in% four_transcripts ~ "prior",
+      gene %in% select_genes ~ "prior",
       .default = is_significant
     )
   ) |>
@@ -212,24 +221,24 @@ pl2 <- expr_estimates |>
     alpha = 0.5
   ) +
   geom_text_repel(
-    size = 4,
+    size = 6,
     max.overlaps = 20
   ) +
   geom_hline(yintercept = 0) +
   theme_minimal(base_size = 16) +
   theme(
     legend.position = "none",
-    plot.subtitle = element_text(size = 12)
+    text = element_text(size = 25)
   ) +
   labs(
     x = "Estimates",
     y = bquote(-log[10](q)),
-    title = "Trancript Associated with Patient Cluster 1",
+    title = "Trancripts Associated with Patient Cluster 1",
     subtitle = str_c("Trancripts highlighted in red had a p-adj. < 0.05 \n- green were also found in PCA"),
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   ) +
   scale_color_manual(values = c("black", "green", "red"))
 pl2
 
-ggsave(here("results/07_associated_genes_vulcano_plot.png"), pl2, height = 10, width = 5)
+ggsave(here("results/07_associated_genes_vulcano_plot.png"), pl2, height = 16, width = 10)
 ```
