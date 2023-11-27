@@ -55,19 +55,26 @@ check_and_install_packages <- function(dir_path) {
     install.packages("BiocManager")
     BiocManager::install()
   }
-  
+
   # Install devtools if not already installed
   if (!requireNamespace("devtools", quietly = TRUE)) {
     install.packages("devtools")
   }
-  
+
   # Install installing ggdendroplot via devtools
   if (!requireNamespace("ggdendroplot", quietly = TRUE)) {
     devtools::install_github("nicolash2/ggdendroplot")
   }
-  
+
+  # Install stringr if not already installed
+  if (!requireNamespace("stringr", quietly = TRUE)) {
+    install.packages("stringr")
+  }
+
   # For each file find all libraries
-  for (file_path in list.files(dir_path)) {
+  qmd_files <- list.files(dir_path) |>
+    stringr::str_subset("\\.qmd$")
+  for (file_path in qmd_files) {
     # Extract library names
     required_packages <- extract_packages(paste0(dir_path, "/", file_path))
 
@@ -77,11 +84,9 @@ check_and_install_packages <- function(dir_path) {
         # Check if part of CRAN or bioconductor and install from these
         if (is_cran_package(package_name)) {
           install.packages(package_name, dependencies = TRUE)
-        } 
-        else if (is_bioconductor_package(package_name)) {
+        } else if (is_bioconductor_package(package_name)) {
           BiocManager::install(package_name)
-        } 
-        else {
+        } else {
           cat(sprintf("%s is not on CRAN or Bioconductor.\n", package_name))
         }
       }

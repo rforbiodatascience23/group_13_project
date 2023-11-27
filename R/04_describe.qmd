@@ -13,7 +13,6 @@ library("tidyverse")
 library("here")
 library("patchwork")
 library("viridis")
-library("plotly")
 library("ggridges")
 library("broom")
 ```
@@ -21,7 +20,7 @@ library("broom")
 ## load data
 
 ```{r}
-data <- read_tsv(here("data/03_dat_augment2.tsv"))
+data <- read_tsv(here("data/03_dat_augment.tsv"))
 ```
 
 ## Dataset dimensions
@@ -135,7 +134,8 @@ race_bar <- data |>
     colour = "black",
     position = position_dodge(width = 0.9)
   ) +
-  scale_fill_brewer(palette = "Set3")
+  scale_fill_brewer(palette = "Set3") +
+  theme_minimal()
 
 
 ggsave(here("results/04_ethnicity_dist.png"), race_bar)
@@ -247,8 +247,7 @@ ridgeline_plot <- data |>
     x = "Overall Survival Months",
     y = "",
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
-  ) +
-  geom_segment(aes(x = 1, xend = 2, y = ))
+  )
 
 ggsave(here("results/04_treatment_ridgeplot.png"), ridgeline_plot)
 
