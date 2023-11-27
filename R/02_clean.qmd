@@ -77,11 +77,11 @@ data <- data |>
     pattern = "\\s*\\(.*\\)"
   )
 
-data <- data |> 
+data <- data |>
   mutate(smoking_history_pack_years = case_when(
     smoking_history_pack_years == "10>PY" ~ 10,
     TRUE ~ as.numeric(smoking_history_pack_years)
-  )) 
+  ))
 ```
 
 ## Save cleaned data
