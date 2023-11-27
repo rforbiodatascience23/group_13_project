@@ -154,7 +154,7 @@ Survival status  -  Dead/alive  -  Treatment type
 
 ::: {.column width="50%"}
 
-![](../results/04_treatment_ridgeplot.png){.absolute top="100" left="-200" width="800" height="700"}
+![](../results/04_treatment_ridgeplot.png){.absolute top="100" left="-200" width="800" height="600"}
 :::
 
 ::: {.column width="50%"}
@@ -165,11 +165,11 @@ Survival status  -  Dead/alive  -  Treatment type
 ::::
 
 
-## PCA 
+## Results
 ![](../results/05_PCA_4_feature.png){.absolute top="80" left="150" width="800" height="600"}
 
 
-## PCA2 
+## Results 
 :::: {.columns}
 
 ::: {.column width="50%"}
@@ -199,48 +199,23 @@ Survival status  -  Dead/alive  -  Treatment type
 
 
 
-## Conclusion {.smaller}
+## Conclusion 
 
 
-##
-
-
-:::: {.columns}
-
-::: {.column width="30%"}
-::: {.fragment .fade-in}
-**Loading**  
-
-- Dimensions: 
+::: {.fragment .fade-left}
+- Confirmation of Study Findings
 :::
 
+::: {.fragment .fade-left}
+- Data Format Consideration
 :::
 
-::: {.column width="30%"}
-::: {.fragment .fade-in}
-**Cleaning**  
 
-- New dimensions: 81, 31669
-
-- Check for duplicates in SampleIDs
-
-- Clean weird variables
-
-- Check NAs 
-
-
-:::
+::: {.fragment .fade-left}
+- Inclusion of Healthy Controls
 :::
 
-::: {.column width="30%"}
-::: {.fragment .fade-in}
-**Augmenting**  
-
-- New dimensions: 81, 31772
-
-
-
-:::
+::: {.fragment .fade-left}
+- Network Biology Analysis
 :::
 
-::::
