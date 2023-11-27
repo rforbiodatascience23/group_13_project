@@ -194,7 +194,7 @@ smoking_s_bar <- data |>
     text = element_text(size = 20)
   )
 
-ggsave(here("results/04_smoking_status_dist.png"), smoking_s_bar)
+ggsave(here("results/04_smoking_status_dist.png"), smoking_s_bar, height = 7.5, width = 7.5)
 
 smoking_s_bar
 ```
@@ -229,7 +229,7 @@ yearly_smoke <- data |>
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   )
 
-ggsave(here("results/04_smoking_status_dist.png"), yearly_smoke)
+ggsave(here("results/04_smoking_status_dist.png"), yearly_smoke, height = 7.5, width = 7.5)
 
 yearly_smoke
 ```
@@ -266,7 +266,7 @@ ridgeline_plot <- data |>
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   )
 
-ggsave(here("results/04_treatment_ridgeplot.png"), ridgeline_plot)
+ggsave(here("results/04_treatment_ridgeplot.png"), ridgeline_plot, height = 7.5, width = 7.5)
 
 # Display the plot
 ridgeline_plot
@@ -373,7 +373,7 @@ survival_boxplot_jitter <- data |>
     parse = TRUE, fill = "white", hjust = 0.1, vjust = 0.1
   )
 
-ggsave(here("results/04_smoking_history_survival_status.png"), survival_boxplot_jitter)
+ggsave(here("results/04_smoking_history_survival_status.png"), survival_boxplot_jitter, height = 7.5, width = 7.5)
 
 survival_boxplot_jitter
 ```
