@@ -29,6 +29,7 @@ library("quarto")
 ```
 
 ```{r}
+## LOAD
 quarto_render(
   input = here("R/01_load.qmd"),
   output_file = "01_load.html"
@@ -37,6 +38,7 @@ quarto_render(
 file.rename(from =  here("results/R/01_load.html"),
             to =  here("results/01_load.html"))
 
+## CLEAN
 quarto_render(
   input = here("R/02_clean.qmd"),
   output_file = "02_clean.html"
@@ -45,6 +47,7 @@ quarto_render(
 file.rename(from =  here("results/R/02_clean.html"),
             to =  here("results/02_clean.html"))
 
+## AUGMENT
 quarto_render(
   input = here("R/03_augment.qmd"),
   output_file = "03_augment.html"
@@ -52,5 +55,42 @@ quarto_render(
 
 file.rename(from =  here("results/R/03_augment.html"),
             to =  here("results/03_augment.html"))
+
+## DESCRIBE
+quarto_render(
+  input = here("R/04_describe.qmd"),
+  output_file = "04_describe.html"
+)
+
+file.rename(from =  here("results/R/04_describe.html"),
+            to =  here("results/04_describe.html"))
+
+## PCA
+quarto_render(
+  input = here("R/05_PCA.qmd"),
+  output_file = "05_PCA.html"
+)
+
+file.rename(from =  here("results/R/05_PCA.html"),
+            to =  here("results/05_PCA.html"))
+
+## HEATMAP
+quarto_render(
+  input = here("R/06_heatmap.qmd"),
+  output_file = "06_heatmap.html"
+)
+
+file.rename(from =  here("results/R/06_heatmap.html"),
+            to =  here("results/06_heatmap.html"))
+
+## LOGISTIC MODEL
+quarto_render(
+  input = here("R/07_logistic_model.qmd"),
+  output_file = "07_logistic_model.html"
+)
+
+file.rename(from =  here("results/R/07_logistic_model.html"),
+            to =  here("results/07_logistic_model.html"))
+
 
 ```
