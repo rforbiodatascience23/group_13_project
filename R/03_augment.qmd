@@ -64,7 +64,7 @@ data_survival_bool <- data_survival |>
 ```
 
 ```{r}
-data_treatment <- data_survival_bool |> 
+data_treatment <- data_survival_bool |>
   mutate(
     treatment_group = case_when(
       is.na(chemotherapy_neo_adjuvant_yes_no) | is.na(chemotherapy_yes_no) | is.na(radiation_yes_no) ~ "Data Missing",
@@ -81,20 +81,13 @@ data_treatment <- data_survival_bool |>
 
 # View changes
 data_treatment |>
-  select(survival_time,
-         survival_status,
-         treatment_group)
+  select(
+    survival_time,
+    survival_status,
+    treatment_group
+  )
 ```
 
-## Save augmented data
-
-```{r}
-# Save as .tsv file
-write_tsv(
-  data_treatment,
-  here("data/03_dat_all_augment.tsv")
-)
-```
 
 # Create a subset of relevant transcripts
 
@@ -107,7 +100,7 @@ We want to create a subset of transcripts that have a low-high expression signat
 ## Get expression data from all data
 
 ```{r}
-expression_data <- data_treatment |> 
+expression_data <- data_treatment |>
   select(1, 33:ncol(data_treatment))
 
 # Print expression_data
@@ -120,11 +113,14 @@ expression_data
 expr_log_trans <- expression_data |>
   group_by(sample_id) |>
   pivot_longer(-sample_id,
-              names_to = "transcript_id",
-              values_to = "expression_value") |>
+    names_to = "transcript_id",
+    values_to = "expression_value"
+  ) |>
   mutate(expression_value = log2(1 + expression_value)) |>
-  pivot_wider(names_from = sample_id,
-              values_from = expression_value) |>
+  pivot_wider(
+    names_from = sample_id,
+    values_from = expression_value
+  ) |>
   ungroup()
 
 expr_log_trans
@@ -142,83 +138,68 @@ expr_trans_no_zero <- expr_log_trans |>
 For each individual transcript we split the expression values into two states, which should correspond to a high and low expression state.
 
 ```{r kmeans-chunk-slow-takes-time}
-# Clustering function that clust
-kmeans_cluster_row <- function(transcript_expr_data) {
-  # Transpose tibble to fit into the kmeans function
-  transposed_tibble <- transcript_expr_data |>
-    pivot_longer(cols = everything(),
-                 names_to = "sample_id")
-  
-  # Clustering
-  cl <- transposed_tibble |>
-    select(value) |>
-    kmeans(centers=2)
-  
-  # Chain clustering states to each expression value
-  cluster_tibble <- transposed_tibble |>
-    mutate(cluster_int = cl$cluster) |>
-    pivot_wider(names_from = sample_id,
-                values_from = value)
-  
-  return(cluster_tibble)
-}
-
 # Perform kmeans clustering on each transcript
 clust_data <- expr_trans_no_zero |>
   group_by(transcript_id) |>
   nest() |>
-  mutate(data = map(.x = data, 
-                    .f = ~kmeans_cluster_row(.x))) |>
+  mutate(data = map(
+    .x = data,
+    .f = ~ kmeans_cluster_row(.x)
+  )) |>
   unnest(data) |>
   ungroup()
 
 # Go to long format
 clust_data_long <- clust_data |>
-  pivot_longer(cols=-c(transcript_id, cluster_int),
-               names_to = 'sample_id',
-               values_to = 'expression_value') |>
+  pivot_longer(
+    cols = -c(transcript_id, cluster_int),
+    names_to = "sample_id",
+    values_to = "expression_value"
+  ) |>
   drop_na()
-
-clust_data_long
 ```
 
 ## Select transcripts according to requirements
 
 ```{r}
-# Average expression fold change check
-fold_change <- function(val_1, val_2){
-  fold_change <- max(val_1, val_2) - min(val_1, val_2)
-  return(fold_change)
-}
-
+# Calculate average fold change in expression
 avg_fold_change <- clust_data_long |>
   group_by(transcript_id, cluster_int) |>
   summarize(avg_expression = mean(expression_value)) |>
   ungroup(cluster_int) |>
-  pivot_wider(names_from = cluster_int,
-              values_from = avg_expression) |>
-  rename(cluster_1_avg_expr = '1',
-         cluster_2_avg_expr = '2') |>
-  mutate(fold_change = map2(.x = cluster_1_avg_expr,
-                            .y = cluster_2_avg_expr,
-                            .f = ~fold_change(val_1 = .x,
-                                              val_2 = .y))) |>
+  pivot_wider(
+    names_from = cluster_int,
+    values_from = avg_expression
+  ) |>
+  rename(
+    cluster_1_avg_expr = "1",
+    cluster_2_avg_expr = "2"
+  ) |>
+  mutate(fold_change = map2(
+    .x = cluster_1_avg_expr,
+    .y = cluster_2_avg_expr,
+    .f = ~ fold_change(
+      val_1 = .x,
+      val_2 = .y
+    )
+  )) |>
   ungroup()
 
-# Save a list of transcript following 
+# Save a list of transcript following
 # average expression fold change > 3
 above_fold_change_threshold <- avg_fold_change |>
   filter(!fold_change == Inf) |>
   filter(fold_change > 3) |>
   pull(transcript_id)
 
-
 # 6 expression values in each state check
 count_clusters <- clust_data_long |>
   filter(transcript_id %in% above_fold_change_threshold) |>
   group_by(transcript_id) |>
-  summarize(cluster1_n = sum(cluster_int == 1),
-            cluster2_n = sum(cluster_int == 2)) |>
+  summarize(
+    cluster1_n = sum(cluster_int == 1),
+    cluster2_n = sum(cluster_int == 2)
+  ) |>
   ungroup()
 
 # Save a list of transcript ids which have 6 or more
@@ -234,7 +215,7 @@ clust_data_long_test <- clust_data_long |>
   summarize(p_value = t.test(expression_value ~ cluster_int)$p.value) |>
   mutate(q_value = p.adjust(p_value, method = "BH"))
 
-# Save a list of 
+# Save a list of
 below_q_value <- clust_data_long_test |>
   filter(q_value < 0.01) |>
   pull(transcript_id)
@@ -249,7 +230,7 @@ selected_transcripts <- below_q_value
 #| echo: false
 # check how many genes
 selected_transcript_expr_split <- selected_transcript_expr |>
-  separate(transcript_id, into = c("gene", "id"), sep = "_", extra="merge")
+  separate(transcript_id, into = c("gene", "id"), sep = "_", extra = "merge")
 
 selected_transcript_expr_split |>
   group_by(gene) |>
@@ -263,23 +244,25 @@ selected_transcript_expr_split |>
 #| eval: false
 #| echo: false
 
-below_q_value <- c("ASCL1_NM_004316", "AVP_NM_000490", "AZGP1_NM_001185", "BEX1_NM_018476", "C11orf53_NM_198498", "CALML3_NM_005185", "CALML5_NM_017422",   "CD164_NM_001142404", "CDKN2A_NM_058195",      "CEACAM5_NM_004363",     "CHGA_NM_001275",        "CSAG1_NM_001102576",
-"DDC_NM_000790",         "DLK1_NM_003836", "EEF1A2_NM_001958",      "FABP7_NM_001446",       "FOXI1_NM_012188",       "GHRH_NM_021081", 
-"GNG8_NM_033258",        "GRP_NM_001012513", "GRP_NM_002091",         "GUCA1A_NM_000409",      "HLA-DRB1_NM_001243965", "HLA-DRB1_NM_002124",
-"IGLL5_NM_001178126",    "MAGEA10_NM_021048",  "MAGEA1_NM_004988",      "MAGEA3_NM_005362",      "MAGEA4_NM_001011549",   "MAGEA6_NM_005363",
-"MCL1_NM_001197320"   ,  "MEST_NM_002402",  "MEST_NM_177525"        ,"MS4A15_NM_152717"   ,   "MS4A8B_NM_031457"      ,"NTS_NM_006183",  
-"PKM2_NM_182471"      ,  "POU2F3_NM_014352",  "PQBP1_NM_001032382"   , "RPL11_NM_001199802" ,   "RPL9_NM_000661"      ,  "RPS28_NM_001031",  
-"RPS4Y1_NM_001008"    ,  "RTN1_NM_206852",  "SCGB1A1_NM_003357"     ,"SCGB3A2_NM_054023"    , "SCGN_NM_006998"       , "SFTPA1_NM_001164647",
-"SFTPA1_NM_005411"    ,  "SFTPA2_NM_001098668",  "SFTPB_NM_000542"  ,     "SFTPB_NM_198843"  ,     "SFTPC_NM_001172357"  ,  "SFTPC_NM_001172410",  
-"SFTPC_NM_003018"      , "SPRR2A_NM_005988",  "SPRR2F_NM_001014450",   "SST_NM_001048"        , "STMN2_NM_007029"       ,"TFF3_NM_003226" )
+below_q_value <- c(
+  "ASCL1_NM_004316", "AVP_NM_000490", "AZGP1_NM_001185", "BEX1_NM_018476", "C11orf53_NM_198498", "CALML3_NM_005185", "CALML5_NM_017422", "CD164_NM_001142404", "CDKN2A_NM_058195", "CEACAM5_NM_004363", "CHGA_NM_001275", "CSAG1_NM_001102576",
+  "DDC_NM_000790", "DLK1_NM_003836", "EEF1A2_NM_001958", "FABP7_NM_001446", "FOXI1_NM_012188", "GHRH_NM_021081",
+  "GNG8_NM_033258", "GRP_NM_001012513", "GRP_NM_002091", "GUCA1A_NM_000409", "HLA-DRB1_NM_001243965", "HLA-DRB1_NM_002124",
+  "IGLL5_NM_001178126", "MAGEA10_NM_021048", "MAGEA1_NM_004988", "MAGEA3_NM_005362", "MAGEA4_NM_001011549", "MAGEA6_NM_005363",
+  "MCL1_NM_001197320", "MEST_NM_002402", "MEST_NM_177525", "MS4A15_NM_152717", "MS4A8B_NM_031457", "NTS_NM_006183",
+  "PKM2_NM_182471", "POU2F3_NM_014352", "PQBP1_NM_001032382", "RPL11_NM_001199802", "RPL9_NM_000661", "RPS28_NM_001031",
+  "RPS4Y1_NM_001008", "RTN1_NM_206852", "SCGB1A1_NM_003357", "SCGB3A2_NM_054023", "SCGN_NM_006998", "SFTPA1_NM_001164647",
+  "SFTPA1_NM_005411", "SFTPA2_NM_001098668", "SFTPB_NM_000542", "SFTPB_NM_198843", "SFTPC_NM_001172357", "SFTPC_NM_001172410",
+  "SFTPC_NM_003018", "SPRR2A_NM_005988", "SPRR2F_NM_001014450", "SST_NM_001048", "STMN2_NM_007029", "TFF3_NM_003226"
+)
 ```
 
 ```{r}
 clust_data_long |>
-  filter(transcript_id %in% below_q_value) |> 
-  write_tsv('quick.tsv')
+  filter(transcript_id %in% below_q_value) |>
+  write_tsv("quick.tsv")
 
-clust_data_long <- read_tsv('quick.tsv')
+clust_data_long <- read_tsv("quick.tsv")
 
 # Find which states are high and which are low via state averages
 avg_expression_clust <- clust_data_long |>
@@ -287,27 +270,34 @@ avg_expression_clust <- clust_data_long |>
   group_by(transcript_id, cluster_int) |>
   summarize(avg_expression = mean(expression_value)) |>
   ungroup() |>
-  pivot_wider(names_from = cluster_int,
-              values_from = avg_expression) |>
-  rename(cluster_1 = '1',
-         cluster_2 = '2')
+  pivot_wider(
+    names_from = cluster_int,
+    values_from = avg_expression
+  ) |>
+  rename(
+    cluster_1 = "1",
+    cluster_2 = "2"
+  )
 
 avg_expression_clust
 ```
 
 ```{r}
-# Select 1 if cluster is of high expression value cluster and 
+# Select 1 if cluster is of high expression value cluster and
 # 0 if cluster is the low expression values cluster for each transcript
 which_clust_high_low <- avg_expression_clust |>
   group_by(transcript_id) |>
-  summarise(avg_max = max(c(cluster_1, cluster_2)),
-            cluster_1_cat = ifelse(avg_max == cluster_1,
-                             1,
-                             0),
-            cluster_2_cat = ifelse(avg_max == cluster_2,
-                               1,
-                               0)
-            ) |>
+  summarise(
+    avg_max = max(c(cluster_1, cluster_2)),
+    cluster_1_cat = ifelse(avg_max == cluster_1,
+      1,
+      0
+    ),
+    cluster_2_cat = ifelse(avg_max == cluster_2,
+      1,
+      0
+    )
+  ) |>
   select(transcript_id, cluster_1_cat, cluster_2_cat)
 
 which_clust_high_low
@@ -318,11 +308,14 @@ which_clust_high_low
 high_low_clustering <- clust_data_long |>
   filter(transcript_id %in% below_q_value) |>
   left_join(which_clust_high_low,
-            by = 'transcript_id') |>
-  mutate(high_low_clust = case_when(cluster_int == 1 & cluster_1_cat == 1 ~1,
-                                    cluster_int == 2 & cluster_2_cat == 1 ~1,
-                                    cluster_int == 1 & cluster_1_cat == 0 ~0,
-                                    cluster_int == 2 & cluster_2_cat == 0 ~0)) |>
+    by = "transcript_id"
+  ) |>
+  mutate(high_low_clust = case_when(
+    cluster_int == 1 & cluster_1_cat == 1 ~ 1,
+    cluster_int == 2 & cluster_2_cat == 1 ~ 1,
+    cluster_int == 1 & cluster_1_cat == 0 ~ 0,
+    cluster_int == 2 & cluster_2_cat == 0 ~ 0
+  )) |>
   select(sample_id, transcript_id, high_low_clust)
 
 high_low_clustering
@@ -332,16 +325,18 @@ high_low_clustering
 # Sample data
 set.seed(143)
 gene_data <- data.frame(
-  sample_id = rep(c("Sample1", "Sample2", "Sample3",
-                "Sample4", "Sample5", "Sample6",
-                "Sample7", "Sample8", "Sample9",
-                "Sample10", "Sample11", "Sample12",
-                "Sample13", "Sample14", "Sample15",
-                "Sample18", "Sample19", "Sample18",
-                "Sample19", "Sample20", "Sample21",
-                "Sample22", "Sample23", "Sample24",
-                "Sample25", "Sample26", "Sample27",
-                "Sample28", "Sample29", "Sample30"), each = 1),
+  sample_id = rep(c(
+    "Sample1", "Sample2", "Sample3",
+    "Sample4", "Sample5", "Sample6",
+    "Sample7", "Sample8", "Sample9",
+    "Sample10", "Sample11", "Sample12",
+    "Sample13", "Sample14", "Sample15",
+    "Sample18", "Sample19", "Sample18",
+    "Sample19", "Sample20", "Sample21",
+    "Sample22", "Sample23", "Sample24",
+    "Sample25", "Sample26", "Sample27",
+    "Sample28", "Sample29", "Sample30"
+  ), each = 1),
   trans_1 = sample(c(0, 1), 30, replace = TRUE),
   trans_2 = sample(c(0, 1), 30, replace = TRUE),
   trans_3 = sample(c(0, 1), 30, replace = TRUE),
@@ -364,14 +359,14 @@ gene_data <- data.frame(
   trans_20 = sample(c(0, 1), 30, replace = TRUE),
   trans_21 = sample(c(0, 1), 30, replace = TRUE),
   trans_22 = sample(c(0, 1), 30, replace = TRUE),
-  trans_23= sample(c(0, 1), 30, replace = TRUE),
+  trans_23 = sample(c(0, 1), 30, replace = TRUE),
   trans_24 = sample(c(0, 1), 30, replace = TRUE),
   trans_25 = sample(c(0, 1), 30, replace = TRUE),
   trans_26 = sample(c(0, 1), 30, replace = TRUE),
   trans_27 = sample(c(0, 1), 30, replace = TRUE),
   trans_28 = sample(c(0, 1), 30, replace = TRUE),
   trans_29 = sample(c(0, 1), 30, replace = TRUE),
-  trans_30= sample(c(0, 1), 30, replace = TRUE)
+  trans_30 = sample(c(0, 1), 30, replace = TRUE)
   # ... add more genes as needed
 )
 
@@ -392,7 +387,7 @@ high_low_clustering |>
 
 # Perform Fisher's exact test for each gene
 fisher_results <- gene_data_long
-  group_by(transcript_id) |>
+group_by(transcript_id) |>
   summarise(
     p_value = fisher.test(table(high_low_clust, sample_id))$p.value
   )
@@ -404,9 +399,11 @@ print(fisher_results)
 fisher_results %>%
   ggplot(aes(x = transcript_id, y = -log10(p_value))) +
   geom_bar(stat = "identity", fill = "skyblue") +
-  labs(title = "Fisher's Exact Test for transcript Expression",
-       x = "transcript_id",
-       y = "-log10(p-value)")
+  labs(
+    title = "Fisher's Exact Test for transcript Expression",
+    x = "transcript_id",
+    y = "-log10(p-value)"
+  )
 
 ```
 
@@ -417,11 +414,15 @@ selected_transcript_expr <- expr_log_trans |>
   filter(transcript_id %in% selected_transcripts)
 
 selected_transcript_sample_row <- selected_transcript_expr |>
-  pivot_longer(cols = -transcript_id,
-               names_to = "sample_id",
-               values_to = "expression_value") |>
-  pivot_wider(names_from = transcript_id,
-              values_from = expression_value)
+  pivot_longer(
+    cols = -transcript_id,
+    names_to = "sample_id",
+    values_to = "expression_value"
+  ) |>
+  pivot_wider(
+    names_from = transcript_id,
+    values_from = expression_value
+  )
 ```
 
 ## Clustering of sample ids via hierarchical clustering
@@ -465,6 +466,9 @@ select_transcript_meta <- data_treatment |>
     .after = survival_time
   )
 
-select_transcript_meta |>
-  write_tsv(here("data/03_dat_selected_transcript_augment.tsv"))
+# Save augmented data
+write_tsv(
+  select_transcript_meta,
+  here("data/03_dat_augment.tsv")
+)
 ```
