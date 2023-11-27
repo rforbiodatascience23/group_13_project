@@ -16,6 +16,7 @@ library("readxl")
 library("tidyclust")
 library("tidymodels")
 source(here("R/99_proj_func.R"))
+library('profmem')
 ```
 
 ## Set seed for reproducibility
@@ -275,9 +276,9 @@ below_q_value <- c("ASCL1_NM_004316", "AVP_NM_000490", "AZGP1_NM_001185", "BEX1_
 ```
 
 ```{r}
-clust_data_long |>
-  filter(transcript_id %in% below_q_value) |> 
-  write_tsv('quick.tsv')
+#clust_data_long |>
+#  filter(transcript_id %in% below_q_value) |> 
+#  write_tsv('quick.tsv')
 
 clust_data_long <- read_tsv('quick.tsv')
 
@@ -326,6 +327,14 @@ high_low_clustering <- clust_data_long |>
   select(sample_id, transcript_id, high_low_clust)
 
 high_low_clustering
+
+high_low_clustering |>
+  pivot_wider(names_from = transcript_id,
+              values_from = high_low_clust) |>
+  select(sample_id, TFF3_NM_003226, ASCL1_NM_004316) |>
+  as.data.frame() -> tester
+
+tester
 ```
 
 ```{r}
@@ -377,41 +386,88 @@ gene_data <- data.frame(
 
 # Print the data
 print(gene_data)
+print(tester)
 
 # Reshape data for easier analysis
 gene_data_long <- gene_data %>%
   pivot_longer(cols = -sample_id, names_to = "transcript_id", values_to = "high_low_clust")
 
-colnames(gene_data_long) == colnames(high_low_clustering)
-class(gene_data_long) == class(high_low_clustering)
+tester_long <- tester |>
+  pivot_longer(cols = -sample_id, names_to = "transcript_id", values_to = "high_low_clust")
+
+#colnames(gene_data_long) == colnames(high_low_clustering)
+#class(gene_data_long) == class(high_low_clustering)
 
 gene_data_long |>
   mutate(high_low_clust = as.factor(high_low_clust),
          sample_id = as.factor(sample_id)) -> fct_gene
 
-high_low_clustering |>
+tester_long |>
   mutate(high_low_clust = as.factor(high_low_clust),
          sample_id = as.factor(sample_id)) -> fct_clus
 
+fct_gene
+fct_clus
+```
+
+```{r}
 # Perform Fisher's exact test for each gene
+
 fisher_results <- fct_clus |>
   group_by(transcript_id) |>
   summarise(
-    p_value = fisher.test(x = high_low_clust, y = sample_id)$p.value
-  )
+    p_value = fisher.test(x = high_low_clust,
+                          y = sample_id,
+                          simulate.p.value = TRUE,
+                          B = 100000
+                          )$p.value
+    )
 
-?fisher.test()
 
 # Print the results
 print(fisher_results)
 
 # Visualize the results
-fisher_results %>%
+fisher_results |>
   ggplot(aes(x = transcript_id, y = -log10(p_value))) +
   geom_bar(stat = "identity", fill = "skyblue") +
   labs(title = "Fisher's Exact Test for transcript Expression",
        x = "transcript_id",
        y = "-log10(p-value)")
+
+?fisher.test
+```
+
+```{r}
+# Sample data
+set.seed(123)
+gene_data <- data.frame(
+  Gene = paste0("Gene", 1:100),
+  State = sample(0:1, 100, replace = TRUE),
+  Cluster1 = sample(1:2, 100, replace = TRUE),
+  Cluster2 = sample(1:2, 100, replace = TRUE)
+  # ... add more clusters as needed
+)
+
+gene_data
+
+# Function to perform Fisher's exact test
+perform_fisher_test <- function(data, gene, reference_gene) {
+  contingency_table <- table(data[[gene]], data[[reference_gene]])
+  fisher_result <- fisher.test(contingency_table)
+  return(fisher_result$p.value)
+}
+
+# Select genes based on Fisher's exact test
+selected_genes <- gene_data %>%
+  select(Gene, State, starts_with("Cluster")) %>%
+  group_by(Gene) %>%
+  filter(sum(State == 1) > 6, sum(State == 0) > 6) %>%
+  filter(across(starts_with("Cluster"), ~perform_fisher_test(data = gene_data, gene = ., reference_gene = "State") <= 1e-6)) %>%
+  pull(Gene)
+
+# Print selected genes
+print(selected_genes)
 
 ```
 
