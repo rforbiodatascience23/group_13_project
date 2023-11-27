@@ -66,6 +66,8 @@ gender_bar <- data |>
   ) +
   scale_fill_brewer(palette = "Set3")
 
+ggsave(here("results/04_patient_count.png"), plot = gender_bar, height = 7.5, width = 10)
+
 gender_age_box <- data |>
   mutate(sex = str_to_title(sex)) |>
   ggplot(mapping = aes(
@@ -99,6 +101,9 @@ gender_age_box <- data |>
   scale_fill_brewer(palette = "Set3")
 
 combined <- gender_bar + gender_age_box
+
+ggsave(here("results/04_patient_count.png"), plot = gender_age_box, height = 7.5, width = 10)
+
 ggsave(here("results/04_patient_gender_count_age_dist.png"), plot = combined, bg = "transparent", height = 7.5, width = 10)
 
 combined
