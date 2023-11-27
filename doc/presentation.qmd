@@ -23,17 +23,51 @@ library("here")
 ```
 
 ## Introduction {.smaller}
-### Paper and data source 
+#### Paper and data source 
 **Title:** Comprehensive genomic profiles of small cell lung cancer, George J. et. al. (2015)  
 
+:::: {.columns}
+
+::: {.column width="75%"}
+
+![](data_chart_2.png){.absolute top="200" left="-100" width="900" height="400"}
+
+:::
+
+::: {.column width="25%"}
+
+::: {.fragment .fade-left}
+<br/>
+*Bullet point 1*
+:::
+
+::: {.fragment .fade-left}
+<br/>
+*Bullet point 2*
+:::
 
 
-```{r out.width="80%",fig.align='center', margin= 0.1}
-knitr::include_graphics(here("doc/data_chart_2.png"))
-```
+::: {.fragment .fade-left}
+<br/>
+*Bullet point 3*
+:::
+:::
+:::
+::::
+
+
+
+<br/>
+<br/>
+<br/>
+<br/>
 
 
 ::: {style="text-align: center; margin-top: 1em"}
+<br/>
+<br/>
+<br/>
+
 Purpose: Identify different small cell lung cancer profiles
 :::
 
@@ -189,19 +223,19 @@ Bullet point 6
 
 
 ## PCA 
-![](../results/05_PCA_4_feature.png){.absolute top="100" left="100" width="800" height="700"}
+![](../results/05_PCA_4_feature.png){.absolute top="90" left="150" width="800" height="650"}
 
 
 ## PCA2 
 :::: {.columns}
 
 ::: {.column width="50%"}
-![](../results/05_PCA_side_by_side_cluster_feature.png){.absolute top="100" left="-200" width="8    00" height="600"}
+![](../results/05_PCA_side_by_side_cluster_feature.png){.absolute top="100" left="-200" width="750" height="600"}
 :::
 
 ::: {.column width="50%"}
 ::: {.fragment .fade-in}
-![](../results/05_PCA_DET_boxplot_pc1_cluster.png){.absolute top="90" left="620" width="700" height="700"}
+![](../results/05_PCA_DET_boxplot_pc1_cluster.png){.absolute top="90" left="600" width="650" height="600"}
 :::
 :::
 ::::
