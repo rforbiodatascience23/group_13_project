@@ -60,7 +60,8 @@ gender_bar <- data |>
     x = "Gender"
   ) +
   theme(
-    panel.grid.major.x = element_blank()
+    panel.grid.major.x = element_blank(),
+    text = element_text(size = 20)
   ) +
   theme_minimal() +
   scale_fill_brewer(palette = "Set3")
@@ -83,7 +84,7 @@ gender_age_box <- data |>
     size = 4,
     show.legend = FALSE
   ) +
-  ggtitle("Violinplot of the age distribution") +
+  ggtitle("Age distribution") +
   labs(
     subtitle = "Stratified on gender",
     y = "Age",
@@ -91,7 +92,8 @@ gender_age_box <- data |>
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   ) +
   theme(
-    panel.grid.major.x = element_blank()
+    panel.grid.major.x = element_blank(),
+    text = element_text(size = 20)
   ) +
   theme_minimal() +
   scale_fill_brewer(palette = "Set3")
@@ -124,8 +126,10 @@ race_bar <- data |>
     fill = "Gender",
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   ) +
+  theme_minimal() +
   theme(
-    panel.grid.major.x = element_blank()
+    panel.grid.major.x = element_blank(),
+    text = element_text(size = 20)
   ) +
   geom_text(
     aes(label = after_stat(count)),
@@ -134,11 +138,10 @@ race_bar <- data |>
     colour = "black",
     position = position_dodge(width = 0.9)
   ) +
-  scale_fill_brewer(palette = "Set3") +
-  theme_minimal()
+  scale_fill_brewer(palette = "Set3")
 
 
-ggsave(here("results/04_ethnicity_dist.png"), race_bar)
+ggsave(here("results/04_ethnicity_dist.png"), race_bar, height = 7.5, width = 10)
 race_bar
 ```
 
@@ -169,16 +172,17 @@ smoking_s_bar <- data |>
     colour = "black"
   ) +
   labs(
-    title = "Count distribution of type of smokers",
+    title = "Distribution of type of smokers",
     y = "",
     x = "Smoking Status",
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   ) +
   scale_fill_brewer(palette = "Set3") +
+  theme_minimal() +
   theme(
-    panel.grid.major.x = element_blank()
-  ) +
-  theme_minimal()
+    panel.grid.major.x = element_blank(),
+    text = element_text(size = 20)
+  )
 
 ggsave(here("results/04_smoking_status_dist.png"), smoking_s_bar)
 
@@ -197,16 +201,19 @@ race_bar_faceted
 
 ```{r}
 yearly_smoke <- data |>
-  ggplot(aes(x = smoking_history_pack_years, y = after_stat(density))) +
+  ggplot(aes(x = smoking_history_pack_years)) +
   geom_histogram(
     binwidth = 5,
-    fill = "white",
+    fill = "#8DD3C7",
     color = "black"
   ) +
-  geom_density(alpha = 0.4, fill = "#8DD3C7") +
+  # geom_density(alpha = 0.4, fill = "#8DD3C7") +
   theme_minimal() +
+  theme(
+    text = element_text(size = 20)
+  ) +
   labs(
-    title = "Distribution of Packs Smoked Per Year",
+    title = "Distribution of Cigarettes Smoked",
     x = "Packs per Year",
     y = "",
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
@@ -237,8 +244,8 @@ ridgeline_plot <- data |>
   scale_fill_brewer(
     palette = "Set3",
     name = "Treatment type"
-  ) + # Choose a color palette
-  theme_ridges(center_axis_labels = TRUE) + # Use the theme specifically designed for ridgeline plots
+  ) +
+  theme_minimal() +
   theme(
     text = element_text(size = 10)
   ) + # Increase base text size for a larger appearance
