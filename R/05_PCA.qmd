@@ -37,7 +37,6 @@ Exploration of the transcripts data in PCA space
 input_pca <- meta_and_expression |>
   select(-c(1:33))
 
-
 # Run pca
 pca_fit <- log2(input_pca + 1) |>
   prcomp()
@@ -281,7 +280,12 @@ plot_pca_one_feature_4 <- pca_fit |>
 plot_pca_one_feature_4
 
 combined <- plot_pca_one_feature_1 + plot_pca_one_feature_2 +
-  plot_pca_one_feature_3 + plot_pca_one_feature_4 + plot_layout(ncol = 2)
+  plot_pca_one_feature_3 + plot_pca_one_feature_4 + plot_layout(ncol = 2) &
+  theme_minimal() &
+  theme(
+    plot.caption.position = "plot",
+    text = element_text(size = 22)
+  )
 
 ggsave(
   filename = here("results/05_PCA_4_feature.png"),
@@ -323,6 +327,7 @@ eigen_explained <- pca_fit |>
     caption = "Data from DOI: https://doi.org/10.1038/nature14664",
     y = "Explained variance (%)"
   ) +
+  theme_minimal() +
   theme(
     panel.grid.minor.x = element_blank(),
     panel.grid.major.x = element_blank(),
@@ -433,9 +438,16 @@ ggsave(
 
 plot_pca_clusters
 
+combined <- plot_pca_clusters + transcripts_in_pca &
+  theme_minimal() &
+  theme(
+    plot.caption.position = "plot",
+    legend.position = "bottom",
+    text = element_text(size = 20)
+  )
 ggsave(
   filename = here("results/05_PCA_side_by_side_cluster_feature.png"),
-  plot = plot_pca_clusters + transcripts_in_pca,
+  plot = combined,
   height = 7.5, width = 12
 )
 ```

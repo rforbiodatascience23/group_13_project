@@ -188,11 +188,13 @@ pl1 <- expr_estimates |>
     caption = "Data from DOI:https://doi.org/10.1038/nature14664"
   ) +
   theme(
-    text = element_text(size = 20),
+    text = element_text(size = 18),
+    plot.title = element_text(28),
     legend.position = "none"
-  )
+  ) +
+  scale_color_manual(values = c("green", "red"))
 pl1
-ggsave(here("results/07_associated_genes_CI.png"), pl1, height = 19, width = 8)
+ggsave(here("results/07_associated_genes_CI.png"), pl1, height = 16, width = 10)
 
 
 pl2 <- expr_estimates |>
