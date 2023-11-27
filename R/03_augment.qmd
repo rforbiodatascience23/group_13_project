@@ -253,7 +253,7 @@ Perform clustering of the gene/transcripts express to see which samples might fo
 hc_data <- selected_transcript_sample_row
 
 hc_spec <- hier_clust(
-  num_clusters = 4,
+  num_clusters = 2,
   linkage_method = "ward.D"
 )
 
