@@ -99,6 +99,7 @@ pca_meta_data <- function(to_plot) {
 Plotting all features in PCA space
 
 ```{r}
+#| eval: false
 # Plot samples against all metadata features
 for (metadata_feature in colnames(meta_and_expression[2:32])) {
   print(pca_meta_data(metadata_feature))
@@ -171,8 +172,11 @@ plot_pca_one_feature_1 <- pca_fit |>
     y = pluck(pca_plot_axes_labels, 2),
     color = "Survival Catagory",
   ) +
-  theme(plot.caption.position = "plot") +
-  theme_minimal()
+  theme_minimal() +
+  theme(
+    plot.caption.position = "plot",
+    text = element_text(size = 22)
+  )
 
 # Print plot
 plot_pca_one_feature_1
@@ -201,8 +205,11 @@ plot_pca_one_feature_2 <- pca_fit |>
     y = pluck(pca_plot_axes_labels, 2),
     color = "Gender"
   ) +
-  theme(plot.caption.position = "plot") +
-  theme_minimal()
+  theme_minimal() +
+  theme(
+    plot.caption.position = "plot",
+    text = element_text(size = 22)
+  )
 
 # Print plot
 plot_pca_one_feature_2
@@ -231,8 +238,11 @@ plot_pca_one_feature_3 <- pca_fit |>
     y = pluck(pca_plot_axes_labels, 2),
     color = "Smoking Catagory"
   ) +
-  theme(plot.caption.position = "plot") +
-  theme_minimal()
+  theme_minimal() +
+  theme(
+    plot.caption.position = "plot",
+    text = element_text(size = 22)
+  )
 
 # Print plot
 plot_pca_one_feature_3
@@ -261,8 +271,11 @@ plot_pca_one_feature_4 <- pca_fit |>
     color = "Number of Smoked \nPacks of Cigarettes",
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   ) +
-  theme(plot.caption.position = "plot") +
-  theme_minimal()
+  theme_minimal() +
+  theme(
+    plot.caption.position = "plot",
+    text = element_text(size = 22)
+  )
 
 # Print plot
 plot_pca_one_feature_4
@@ -273,8 +286,8 @@ combined <- plot_pca_one_feature_1 + plot_pca_one_feature_2 +
 ggsave(
   filename = here("results/05_PCA_4_feature.png"),
   plot = combined,
-  height = 10,
-  width = 12
+  height = 12,
+  width = 18
 )
 
 combined
@@ -363,7 +376,8 @@ transcripts_in_pca <- pca_fit |>
   labs(
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   ) +
-  theme_minimal()
+  theme_minimal() +
+  theme(text = element_text(size = 20))
 
 ggsave(
   filename = here("results/05_PCA_feature.png"),
@@ -395,7 +409,7 @@ plot_pca_clusters <- pca_fit |>
     yintercept = 0
   ) +
   labs(
-    title = "PCA of Trancripts expression",
+    title = "PCA of Trancripts Expression",
     subtitle = "Cluster of patients based on selected trancripts",
     x = pluck(pca_plot_axes_labels, 1),
     y = pluck(pca_plot_axes_labels, 2),
@@ -404,7 +418,8 @@ plot_pca_clusters <- pca_fit |>
   theme_minimal() +
   theme(
     plot.caption.position = "plot",
-    legend.position = "bottom"
+    legend.position = "bottom",
+    text = element_text(size = 20)
   ) +
   scale_colour_discrete(
     labels = c("Cluster 1", "Cluster 2")
@@ -454,9 +469,9 @@ plot_boxplot_pc1_cluster <- meta_and_expression |>
   ) +
   facet_wrap(~transcripts, scales = "free") +
   labs(
-    title = "Transcript expression across Clusters",
+    title = "Transcript Expression across Clusters",
     x = "Patient cluters by Hierarchical Clustering",
-    y = "",
+    y = "Transcript Expression",
     fill = "Transcripts",
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   ) +
@@ -464,15 +479,18 @@ plot_boxplot_pc1_cluster <- meta_and_expression |>
     labels = scales::trans_format("log10", scales::math_format(10^.x))
   ) +
   theme_minimal() +
-  theme(legend.position = "none") +
+  theme(
+    legend.position = "none",
+    text = element_text(size = 20)
+  ) +
   scale_fill_brewer(palette = "Set3")
 
 
 ggsave(
   filename = here("results/05_PCA_DET_boxplot_pc1_cluster.png"),
   plot = plot_boxplot_pc1_cluster,
-  width = 7.5,
-  height = 7.5
+  width = 10,
+  height = 10
 )
 
 plot_boxplot_pc1_cluster
