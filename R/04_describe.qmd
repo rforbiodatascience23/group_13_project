@@ -21,7 +21,7 @@ library("broom")
 ## load data
 
 ```{r}
-data <- read_tsv(here("data/03_dat_augment.tsv"))
+data <- read_tsv(here("data/03_dat_augment2.tsv"))
 ```
 
 ## Dataset dimensions
@@ -97,11 +97,14 @@ gender_age_box <- data |>
   theme_minimal() +
   scale_fill_brewer(palette = "Set3")
 
-gender_bar + gender_age_box
-ggsave(here("results/04_patient_gender_count_age_dist.png"), gender_bar + gender_age_box)
+combined <- gender_bar + gender_age_box
+ggsave(here("results/04_patient_gender_count_age_dist.png"), combined)
+
+combined
 ```
 
 ## Ethnicity
+
 ```{r}
 race_bar <- data |>
   mutate(sex = str_to_title(sex)) |>
@@ -133,8 +136,10 @@ race_bar <- data |>
     position = position_dodge(width = 0.9)
   ) +
   scale_fill_brewer(palette = "Set3")
-race_bar
+
+
 ggsave(here("results/04_ethnicity_dist.png"), race_bar)
+race_bar
 ```
 
 ## Smoking status
@@ -175,14 +180,16 @@ smoking_s_bar <- data |>
   ) +
   theme_minimal()
 
-smoking_s_bar
 ggsave(here("results/04_smoking_status_dist.png"), smoking_s_bar)
+
+smoking_s_bar
 ```
 
 ```{r}
 race_bar_faceted <- race_bar +
   facet_wrap(~smoking_status) +
   labs(subtitle = "Stratified on gender and smoking status")
+
 race_bar_faceted
 ```
 
@@ -205,11 +212,11 @@ yearly_smoke <- data |>
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   )
 
-yearly_smoke
 ggsave(here("results/04_smoking_status_dist.png"), yearly_smoke)
+
+yearly_smoke
 ```
 
-  
 Created new column for overview of treatment type.
 
 ```{r}
@@ -243,11 +250,10 @@ ridgeline_plot <- data |>
   ) +
   geom_segment(aes(x = 1, xend = 2, y = ))
 
+ggsave(here("results/04_treatment_ridgeplot.png"), ridgeline_plot)
 
 # Display the plot
 ridgeline_plot
-
-ggsave(here("results/04_treatment_ridgeplot.png"), ridgeline_plot)
 ```
 
 ```{r}
@@ -350,7 +356,8 @@ survival_boxplot_jitter <- data |>
     data = means, aes(x = status_at_time_of_last_follow_up, y = mu + 1, label = label),
     parse = TRUE, fill = "white", hjust = 0.1, vjust = 0.1
   )
-survival_boxplot_jitter
 
 ggsave(here("results/04_smoking_history_survival_status.png"), survival_boxplot_jitter)
+
+survival_boxplot_jitter
 ```
