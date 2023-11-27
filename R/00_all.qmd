@@ -7,7 +7,7 @@ date: "2023-11-08"
 editor: visual
 ---
 
-## Install required libraries
+## Install required packages for entire project
 
 ```{r}
 # Install here package
@@ -19,7 +19,7 @@ if (!requireNamespace("here", quietly = TRUE)) {
 # the custom check_and_install_libraries() function
 library("here")
 source(here("R/99_proj_func.R"))
-check_and_install_libraries(dir_path=here("R"))
+check_and_install_packages(dir_path=here("R"))
 ```
 
 ## Load libraries
@@ -29,18 +29,68 @@ library("quarto")
 ```
 
 ```{r}
+## LOAD
 quarto_render(
   input = here("R/01_load.qmd"),
   output_file = "01_load.html"
 )
 
+file.rename(from =  here("results/R/01_load.html"),
+            to =  here("results/01_load.html"))
+
+## CLEAN
 quarto_render(
   input = here("R/02_clean.qmd"),
-  output_file = "01_load.html"
+  output_file = "02_clean.html"
 )
 
+file.rename(from =  here("results/R/02_clean.html"),
+            to =  here("results/02_clean.html"))
+
+## AUGMENT
 quarto_render(
   input = here("R/03_augment.qmd"),
-  output_file = "01_load.html"
+  output_file = "03_augment.html"
 )
+
+file.rename(from =  here("results/R/03_augment.html"),
+            to =  here("results/03_augment.html"))
+
+## DESCRIBE
+quarto_render(
+  input = here("R/04_describe.qmd"),
+  output_file = "04_describe.html"
+)
+
+file.rename(from =  here("results/R/04_describe.html"),
+            to =  here("results/04_describe.html"))
+
+## PCA
+quarto_render(
+  input = here("R/05_PCA.qmd"),
+  output_file = "05_PCA.html"
+)
+
+file.rename(from =  here("results/R/05_PCA.html"),
+            to =  here("results/05_PCA.html"))
+
+## HEATMAP
+quarto_render(
+  input = here("R/06_heatmap.qmd"),
+  output_file = "06_heatmap.html"
+)
+
+file.rename(from =  here("results/R/06_heatmap.html"),
+            to =  here("results/06_heatmap.html"))
+
+## LOGISTIC MODEL
+quarto_render(
+  input = here("R/07_logistic_model.qmd"),
+  output_file = "07_logistic_model.html"
+)
+
+file.rename(from =  here("results/R/07_logistic_model.html"),
+            to =  here("results/07_logistic_model.html"))
+
+
 ```
