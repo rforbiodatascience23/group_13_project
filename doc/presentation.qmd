@@ -22,7 +22,8 @@ library("tidyverse")
 library("here")
 ```
 
-## Paper and data source {.smaller}
+## Introduction {.smaller}
+### Paper and data source 
 **Title:** Comprehensive genomic profiles of small cell lung cancer, George J. et. al. (2015)  
 
 
@@ -36,16 +37,46 @@ knitr::include_graphics(here("doc/data_chart_2.png"))
 Purpose: Identify different small cell lung cancer profiles
 :::
 
-## Data set overview {.smaller}
-```{r read data_load, include = FALSE}
-#|eval: false
-data_load <- read_tsv(here("data/01_dat_load.tsv"),
-                      show_col_types = FALSE)
-data_clean <- read_tsv(here("data/02_dat_clean.tsv"),
-                       show_col_types = FALSE)
-data_aug <- read_tsv(here("data/03_dat_augment.tsv"),
-                     show_col_types = FALSE)
-```
+
+## Methods
+### XXXXXXXXX
+
+<br/>
+
+
+::: {.fragment .fade-left}
+Bullet point 1
+:::
+
+::: {.fragment .fade-left}
+Bullet point 2
+:::
+
+
+::: {.fragment .fade-left}
+Bullet point 3
+:::
+
+
+::: {.fragment .fade-left}
+Bullet point 4
+:::
+
+
+::: {.fragment .fade-left}
+Bullet point 5
+:::
+
+::: {.fragment .fade-left}
+Bullet point 6
+:::
+
+
+
+
+
+
+## Data set overview
 
 
 :::: {.columns}
@@ -54,7 +85,7 @@ data_aug <- read_tsv(here("data/03_dat_augment.tsv"),
 ::: {.fragment .fade-in}
 **Loading**  
 
-- Dimensions: `r dim(data_load)` 
+- Dimensions: 81, 31669 
 
 - 30 metadata
 
@@ -67,7 +98,7 @@ data_aug <- read_tsv(here("data/03_dat_augment.tsv"),
 ::: {.fragment .fade-in}
 **Cleaning**  
 
-- New dimensions: `r dim(data_clean)`
+- New dimensions: 81, 31669
 
 - Check for duplicates in SampleIDs
 
@@ -83,7 +114,7 @@ data_aug <- read_tsv(here("data/03_dat_augment.tsv"),
 ::: {.fragment .fade-in}
 **Augmenting**  
 
-- New dimensions: `r dim(data_aug)`
+- New dimensions: 81, 31772
 
 
 
@@ -91,89 +122,91 @@ data_aug <- read_tsv(here("data/03_dat_augment.tsv"),
 :::
 
 ::::
-## Overview of metadata 1
+## Overview of metadata 
 :::: {.columns}
 
 ::: {.column width="50%"}
-```{r out.width="80%",fig.align='left'}
-knitr::include_graphics(here("results/04_ethnicity_dist.png"))
-```
+
+![](../results/04_ethnicity_dist.png){.absolute top="100" left="-200" width="600" height="600"}
+
 :::
 
 ::: {.column width="50%"}
 ::: {.fragment .fade-in}
-```{r out.width="80%",fig.align='right'}
-knitr::include_graphics(here("results/04_patient_gender_count_age_dist.png"))
-```
+![](../results/04_patient_gender_count_age_dist.png){.absolute top="100" left="410" width="800" height="600"}
 
 :::
 :::
 ::::
-## Overview of metadata 2
+
+## Overview of metadata 
 :::: {.columns}
 
 ::: {.column width="50%"}
-```{r out.width="200%",fig.align='center'}
-knitr::include_graphics(here("results/04_ethnicity_dist.png"))
-```
+![](../results/04_smoking_status_dist.png){.absolute top="100" left="-200" width="600" height="600"}
 :::
 
 ::: {.column width="50%"}
 ::: {.fragment .fade-in}
-```{r out.width="200%",fig.align='center'}
-knitr::include_graphics(here("results/04_patient_gender_count_age_dist.png"))
-```
-
+![](../results/04_smoking_history_survival_status.png){.absolute top="100" left="410" width="800" height="600"}
 :::
 :::
 ::::
-## Overview of metadata 3
-:::: {.columns}
-
-::: {.column width="50%"}
-```{r out.width="80%",fig.align='left'}
-knitr::include_graphics(here("results/04_ethnicity_dist.png"))
-```
-:::
-
-::: {.column width="50%"}
-::: {.fragment .fade-in}
-```{r out.width="80%",fig.align='left'}
-knitr::include_graphics(here("results/04_patient_gender_count_age_dist.png"))
-```
-
-:::
-:::
-::::
-## Overview of metadata 4
-:::: {.columns}
-
-::: {.column width="50%"}
-```{r out.width="80%",fig.align='center', fig.asp=2}
-knitr::include_graphics(here("results/04_ethnicity_dist.png"))
-```
-:::
-
-::: {.column width="50%"}
-::: {.fragment .fade-in}
-```{r out.width="80%",fig.align='center', fig.asp=2}
-knitr::include_graphics(here("results/04_patient_gender_count_age_dist.png"))
-```
-
-:::
-:::
-::::
-
-
-## Methods
-### submethod
-K-means 
-Hierchichal clustring 
-t-test : N0 : There is no significant difference between clusters.
-To get low-high expression signature
-
 
 ## Results
+:::: {.columns}
+
+::: {.column width="50%"}
+
+![](../results/04_treatment_ridgeplot.png){.absolute top="100" left="-200" width="800" height="800"}
+:::
+
+::: {.column width="50%"}
+::: {.fragment .fade-in}
+![](../results/06_heatmap_plot.png){.absolute top="100" left="610" width="700" height="750"}
+:::
+:::
+::::
+<!-- K-means  -->
+<!-- Hierchichal clustring  -->
+<!-- t-test : N0 : There is no significant difference between clusters. -->
+<!-- To get low-high expression signature -->
+
+
+## 
+:::: {.columns}
+
+::: {.column width="50%"}
+![](../results/07_associated_genes_vulcano_plot.png){.absolute top="0" left="-200" width="700" height="800"}
+:::
+
+::: {.column width="50%"}
+::: {.fragment .fade-in}
+![](../results/07_associated_genes_CI.png){.absolute top="0" left="520" width="700" height="800"}
+:::
+:::
+::::
+
+
+## PCA 
+![](../results/05_PCA_4_feature.png){.absolute top="100" left="100" width="800" height="700"}
+
+
+## PCA2 
+:::: {.columns}
+
+::: {.column width="50%"}
+![](../results/05_PCA_side_by_side_cluster_feature.png){.absolute top="100" left="-200" width="8    00" height="600"}
+:::
+
+::: {.column width="50%"}
+::: {.fragment .fade-in}
+![](../results/05_PCA_DET_boxplot_pc1_cluster.png){.absolute top="90" left="620" width="700" height="700"}
+:::
+:::
+::::
+
+
 ## Executable Code
 
 ```{r}
