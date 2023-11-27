@@ -56,6 +56,16 @@ check_and_install_packages <- function(dir_path) {
     BiocManager::install()
   }
   
+  # Install devtools if not already installed
+  if (!requireNamespace("devtools", quietly = TRUE)) {
+    install.packages("devtools")
+  }
+  
+  # Install installing ggdendroplot via devtools
+  if (!requireNamespace("ggdendroplot", quietly = TRUE)) {
+    devtools::install_github("nicolash2/ggdendroplot")
+  }
+  
   # For each file find all libraries
   for (file_path in list.files(dir_path)) {
     # Extract library names
@@ -104,7 +114,6 @@ kmeans_cluster_row <- function(transcript_expr_data) {
 
   return(cluster_tibble)
 }
-
 
 # Average expression fold change check
 fold_change <- function(val_1, val_2) {
