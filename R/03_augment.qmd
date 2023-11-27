@@ -63,6 +63,8 @@ data_survival_bool <- data_survival |>
   )
 ```
 
+## Add categorical values for treatment methods
+
 ```{r}
 data_treatment <- data_survival_bool |>
   mutate(
@@ -87,7 +89,6 @@ data_treatment |>
     treatment_group
   )
 ```
-
 
 # Create a subset of relevant transcripts
 
@@ -223,71 +224,6 @@ below_q_value <- clust_data_long_test |>
 selected_transcripts <- below_q_value
 ```
 
-## Find genes with multiple transcripts (?)
-
-```{r}
-#| eval: false
-#| echo: false
-# check how many genes
-selected_transcript_expr_split <- selected_transcript_expr |>
-  separate(transcript_id, into = c("gene", "id"), sep = "_", extra = "merge")
-
-selected_transcript_expr_split |>
-  group_by(gene) |>
-  summarise(n = n()) |>
-  arrange(desc(n))
-```
-
-## Fishers exact test (?)
-
-```{r}
-#| eval: false
-#| echo: false
-# clust_data_long |>
-#  filter(transcript_id %in% below_q_value) |>
-#  head(486) |>
-#  select(-sample_id) |>
-#  group_by(transcript_id) |>
-#  summarise(n=n())
-#
-# clust_data_long |>
-#  filter(transcript_id %in% below_q_value) |>
-#  head(486) |>
-#  select(-sample_id) |>
-#  mutate(cluster_int = as.character(cluster_int)) |>
-#  group_by(transcript_id) |>
-#    summarise(
-#    p_value = fisher.test(table(expression_value, cluster_int))$p.value
-#  )
-
-### Example of how to run with smaller data
-# Reshape data for easier analysis
-gene_data_long <- gene_data %>%
-  pivot_longer(cols = -Group, names_to = "Gene", values_to = "Expression")
-
-gene_data_long
-
-# Perform Fisher's exact test for each gene
-fisher_results <- gene_data_long |>
-  group_by(Gene) |>
-  summarise(
-    p_value = fisher.test(table(Expression, Group))$p.value
-  )
-
-# Print the results
-fisher_results
-
-# Visualize the results
-fisher_results %>%
-  ggplot(aes(x = Gene, y = -log10(p_value))) +
-  geom_bar(stat = "identity", fill = "skyblue") +
-  labs(
-    title = "Fisher's Exact Test for Gene Expression",
-    x = "Gene",
-    y = "-log10(p-value)"
-  )
-```
-
 ## Pivot to sample per row
 
 ```{r}
@@ -350,7 +286,6 @@ select_transcript_meta <- data_treatment |>
 # Save augmented data
 write_tsv(
   select_transcript_meta,
-  here("data/03_dat_augment.tsv")
+  here("data/03_dat_augment2.tsv")
 )
 ```
->>>>>>> main
