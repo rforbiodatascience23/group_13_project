@@ -59,11 +59,11 @@ gender_bar <- data |>
     y = "Count",
     x = "Gender"
   ) +
+  theme_minimal() +
   theme(
     panel.grid.major.x = element_blank(),
     text = element_text(size = 20)
   ) +
-  theme_minimal() +
   scale_fill_brewer(palette = "Set3")
 
 gender_age_box <- data |>
@@ -91,15 +91,15 @@ gender_age_box <- data |>
     x = "Gender",
     caption = "Data from DOI: https://doi.org/10.1038/nature14664"
   ) +
+  theme_minimal() +
   theme(
     panel.grid.major.x = element_blank(),
     text = element_text(size = 20)
   ) +
-  theme_minimal() +
   scale_fill_brewer(palette = "Set3")
 
 combined <- gender_bar + gender_age_box
-ggsave(here("results/04_patient_gender_count_age_dist.png"), combined)
+ggsave(here("results/04_patient_gender_count_age_dist.png"), plot = combined, bg = "transparent", height = 7.5, width = 10)
 
 combined
 ```
