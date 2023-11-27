@@ -12,9 +12,7 @@ format:
     theme: solarized
     logo: dtu_logo.png
     slide-number: TRUE
-    chalkboard:
-      buttons: true
-
+    embed-resources: true
 ---
 
 
@@ -29,11 +27,10 @@ library("here")
 
 
 
-::: {.fragment .strike}
-```{r out.width="80%",fig.align='center'}
+```{r out.width="80%",fig.align='center', margin= 0.1}
 knitr::include_graphics(here("doc/data_chart_2.png"))
 ```
-:::
+
 
 ::: {style="text-align: center; margin-top: 1em"}
 Purpose: Identify different small cell lung cancer profiles
@@ -77,6 +74,8 @@ data_aug <- read_tsv(here("data/03_dat_augment.tsv"),
 - Clean weird variables
 
 - Check NAs 
+
+
 :::
 :::
 
@@ -86,18 +85,84 @@ data_aug <- read_tsv(here("data/03_dat_augment.tsv"),
 
 - New dimensions: `r dim(data_aug)`
 
-- 
+
 
 :::
 :::
 
 ::::
+## Overview of metadata 1
+:::: {.columns}
 
-#### Added variables
-
-```{r}
-#knitr::kable(head(data_aug) c("survival_status", "survival")])
+::: {.column width="50%"}
+```{r out.width="80%",fig.align='left'}
+knitr::include_graphics(here("results/04_ethnicity_dist.png"))
 ```
+:::
+
+::: {.column width="50%"}
+::: {.fragment .fade-in}
+```{r out.width="80%",fig.align='right'}
+knitr::include_graphics(here("results/04_patient_gender_count_age_dist.png"))
+```
+
+:::
+:::
+::::
+## Overview of metadata 2
+:::: {.columns}
+
+::: {.column width="50%"}
+```{r out.width="200%",fig.align='center'}
+knitr::include_graphics(here("results/04_ethnicity_dist.png"))
+```
+:::
+
+::: {.column width="50%"}
+::: {.fragment .fade-in}
+```{r out.width="200%",fig.align='center'}
+knitr::include_graphics(here("results/04_patient_gender_count_age_dist.png"))
+```
+
+:::
+:::
+::::
+## Overview of metadata 3
+:::: {.columns}
+
+::: {.column width="50%"}
+```{r out.width="80%",fig.align='left'}
+knitr::include_graphics(here("results/04_ethnicity_dist.png"))
+```
+:::
+
+::: {.column width="50%"}
+::: {.fragment .fade-in}
+```{r out.width="80%",fig.align='left'}
+knitr::include_graphics(here("results/04_patient_gender_count_age_dist.png"))
+```
+
+:::
+:::
+::::
+## Overview of metadata 4
+:::: {.columns}
+
+::: {.column width="50%"}
+```{r out.width="80%",fig.align='center', fig.asp=2}
+knitr::include_graphics(here("results/04_ethnicity_dist.png"))
+```
+:::
+
+::: {.column width="50%"}
+::: {.fragment .fade-in}
+```{r out.width="80%",fig.align='center', fig.asp=2}
+knitr::include_graphics(here("results/04_patient_gender_count_age_dist.png"))
+```
+
+:::
+:::
+::::
 
 
 ## Methods
