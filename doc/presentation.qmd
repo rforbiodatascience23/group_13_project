@@ -39,7 +39,7 @@ library("here")
 
 ::: {.fragment .fade-left}
 *Loading:* <br/>
-- (81, 31669)  <br/>
+- Data dimensions: 81 x 31669  <br/>
 - 30 metadata  <br/>
 - 31639 gene expression
 
@@ -76,11 +76,11 @@ library("here")
 ### Load, clean and augment
 
 ::: {.fragment .fade-left}
-- Load in data from two different sheets in an excel file and combine these into a single file.
+- Load in data from two different sheets in an excel file and combine these into a single file
 :::
 
 ::: {.fragment .fade-left}
-- Clean the data by creating usable column names and check that NAs exists.
+- Clean the data by creating usable column names and check that NAs exists
 :::
 
 
