@@ -373,7 +373,7 @@ survival_boxplot_jitter <- data |>
     parse = TRUE, fill = "white", hjust = 0.1, vjust = 0.1
   )
 
-ggsave(here("results/04_smoking_history_survival_status.png"), survival_boxplot_jitter)
+ggsave(here("results/04_smoking_history_survival_status.png"), survival_boxplot_jitter, height = 7.5, width = 7.5)
 
 survival_boxplot_jitter
 ```
