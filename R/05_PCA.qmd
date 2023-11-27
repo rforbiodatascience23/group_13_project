@@ -178,8 +178,6 @@ plot_pca_one_feature_1 <- pca_fit |>
     caption = "Data from doi.org/10.1038/s42003-021-01842-7")+
   theme(plot.caption.position = "plot")
 
-plot_pca_one_feature_1
-
 
 plot_pca_one_feature_2 <- pca_fit |>
   augment(data) |> 
@@ -254,8 +252,112 @@ plot_pca_one_feature_4 <- pca_fit |>
     caption = "Data from doi.org/10.1038/s42003-021-01842-7")+
   theme(plot.caption.position = "plot")
 
-combined<- plot_pca_one_feature_1 + plot_pca_one_feature_2 +  
-  plot_pca_one_feature_3 + plot_pca_one_feature_4 + plot_layout(guides = "collect") 
+plot_pca_one_feature_1 + plot_pca_one_feature_2 +  
+  plot_pca_one_feature_3 + plot_pca_one_feature_4 + plot_layout(ncol = 2) 
+
+combined<- plot_grid(plot_pca_one_feature_1,
+                     plot_pca_one_feature_2 + 
+                       theme(
+                         axis.text.y = element_blank(),
+                              axis.ticks.y = element_blank(),
+                              axis.title.y = element_blank() 
+                         ),
+                     plot_pca_one_feature_3 +
+                       theme(axis.text.y = element_blank(),
+                              axis.ticks.y = element_blank(),
+                              axis.title.y = element_blank() 
+                             ),
+                     plot_pca_one_feature_4 + 
+                       theme(axis.text.y = element_blank(),
+                              axis.ticks.y = element_blank(),
+                              axis.title.y = element_blank() 
+                             ), 
+                     ncol = 2, 
+                     align = "hv", 
+                     labels = "AUTO")
+combined
+
+
+ggsave(
+  filename = here("results/05_PCA_one_feature.png"),
+  plot = plot_pca_one_feature
+)
+```
+
+```{r}
+plot_pca_one_feature_1 <- pca_fit |>
+  augment(data) |> 
+  filter(!is.na(survival_time)) |>
+  ggplot(
+    aes(
+      x = .fittedPC1,
+      y = .fittedPC2, )) + 
+  geom_point(
+    aes_string(
+      color =   "survival_time"),
+    size = 3) +
+  theme_half_open(12) +
+  background_grid()+
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0) 
+
+plot_pca_one_feature_2 <- pca_fit |>
+  augment(data) |> 
+  filter(!is.na(sex)) |>
+  ggplot(
+    aes(
+      x = .fittedPC1,
+      y = .fittedPC2, )) + 
+  geom_point(
+    aes_string(
+      color =   "sex"),
+    size = 3) +
+  theme_half_open(12) +
+  background_grid()+
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0) 
+
+plot_pca_one_feature_3 <- pca_fit |>
+  augment(data) |> 
+  filter(!is.na(smoking_status)) |>
+  ggplot(
+    aes_string(
+      x = ".fittedPC1",
+      y = ".fittedPC2",
+      color =   "smoking_status")) + 
+  geom_point(
+    size = 3
+    ) +
+  theme_half_open(12) +
+  background_grid()+
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0) 
+ 
+plot_pca_one_feature_4 <- pca_fit |>
+  augment(data) |> 
+  filter(!is.na(smoking_history_pack_years)) |>
+  ggplot(
+    aes(
+      x = .fittedPC1,
+      y = .fittedPC2, )) + 
+  geom_point(
+    aes_string(
+      color =   "smoking_history_pack_years"),
+    size = 3) +
+  theme_half_open(12) +
+  background_grid()+
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0) 
+ 
+combined<- plot_grid(plot_pca_one_feature_1,
+                     plot_pca_one_feature_2,
+                     plot_pca_one_feature_3,
+                     plot_pca_one_feature_4, 
+                     ncol = 2, 
+                     align = "hv", 
+                     labels = "AUTO")
+ 
+
 combined
 
 
