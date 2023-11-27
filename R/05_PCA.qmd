@@ -15,7 +15,6 @@ library("ggrepel")
 library("broom")
 library("here")
 library("readxl")
-library("cowplot")
 library("patchwork")
 source(here("R/99_proj_func.R"))
 ```
@@ -24,18 +23,18 @@ source(here("R/99_proj_func.R"))
 
 ```{r}
 # Load data
-data <- read_tsv(here("data/03_dat_augment.tsv"))
+meta_and_expression <- read_tsv(here("data/03_dat_augment.tsv"))
 ```
 
 ## PCA
 
-Exploration of the trancripts data in PCA space
+Exploration of the transcripts data in PCA space
 
 ### Computing PCA
 
 ```{r}
 # Subset data to expression data
-input_pca <- data |>
+input_pca <- meta_and_expression |>
   select(-c(1:33))
 
 
@@ -44,7 +43,7 @@ pca_fit <- log2(input_pca + 1) |>
   prcomp()
 ```
 
-### Pre-ploting
+### Labels generation for PCA
 
 Creating labels for PC and variances explanation
 
@@ -63,15 +62,15 @@ pca_plot_axes_labels |>
   head(2)
 ```
 
-### Meta data in PCA
+### Exploring metadata in PCA space
 
-Explore meta data
+Create function to plot each metadata feature in 2d PCA
 
 ```{r}
 # Function to plot in PCA space
 pca_meta_data <- function(to_plot) {
   plot_pca_ethnicity <- pca_fit |>
-    augment(data)  |>
+    augment(meta_and_expression)  |>
     ggplot(aes(x = .fittedPC1,
                y = .fittedPC2)) + 
     geom_point(aes_string(color = to_plot),
@@ -80,10 +79,9 @@ pca_meta_data <- function(to_plot) {
     background_grid()+
     geom_vline(xintercept = 0) +
     geom_hline(yintercept = 0) +
-    labs(title = "PCA: Paitiens clusters by Trancriptpics",
+    labs(title = "PCA: Patient clusters by Trancripts",
          x = pluck(pca_plot_axes_labels, 1),
          y = pluck(pca_plot_axes_labels, 2),
-         fill = "Survival Category",
          caption = "Data from doi.org/10.1038/s42003-021-01842-7")+
     theme(plot.caption.position = "plot")
  
@@ -91,25 +89,22 @@ pca_meta_data <- function(to_plot) {
 }
 ```
 
-### Plot all
-
-None of the meta data seems to explain the subgroups.
+Plotting all features in PCA space
 
 ```{r}
 # Plot samples against all metadata features
-for (x in colnames(data[2:33])) {
-  print(pca_meta_data(x))
+for (metadata_feature in colnames(meta_and_expression[2:32])) {
+  print(pca_meta_data(metadata_feature))
 }
 ```
 
+We found that none of the original metadata feature explains anything in the PCA space.
 
-We found that none of the metadata feature is explained in the PCA space
-
-#### Plotting survival time to see an example of no correlation in PCA space
+#### Plotting an example of no explainability in PCA space using survival time feature 
 
 ```{r}
 plot_survival_pca <- pca_fit |>
-  augment(data) |>
+  augment(meta_and_expression) |>
   filter(!is.na(survival_time)) |>
   ggplot(
     aes(
@@ -136,18 +131,17 @@ plot_survival_pca <- pca_fit |>
   ) +
   theme(plot.caption.position = "plot")
 
-ggsave(filename = here("results/05_PCA_one_feature.png"),
+ggsave(filename = here("results/05_PCA_survival_feature.png"),
        plot = plot_survival_pca)
 
 plot_survival_pca
-
 ```
 
 #### 4 plots
 
 ```{r}
 plot_pca_one_feature_1 <- pca_fit |>
-  augment(data) |> 
+  augment(meta_and_expression) |> 
   filter(!is.na(survival_time)) |>
   ggplot(
     aes(
@@ -162,17 +156,16 @@ plot_pca_one_feature_1 <- pca_fit |>
   geom_vline(xintercept = 0) +
   geom_hline(yintercept = 0) +
   labs(
-    title = "PCA: Paitiens clusters by Trancriptpics",
+    title = "PCA: Paitiens clusters by Trancripts",
     x = pluck(pca_plot_axes_labels, 1),
     y = pluck(pca_plot_axes_labels, 2),
-    shape = "Pantient HC",
-    color = "Survival Catagorie",
+    color = "Survival Catagory",
     caption = "Data from doi.org/10.1038/s42003-021-01842-7")+
   theme(plot.caption.position = "plot")
 
 
 plot_pca_one_feature_2 <- pca_fit |>
-  augment(data) |> 
+  augment(meta_and_expression) |> 
   filter(!is.na(sex)) |>
   ggplot(
     aes(
@@ -187,17 +180,16 @@ plot_pca_one_feature_2 <- pca_fit |>
   geom_vline(xintercept = 0) +
   geom_hline(yintercept = 0) +
   labs(
-    title = "PCA: Paitiens clusters by Trancriptpics",
+    title = "PCA: Paitiens clusters by Trancripts",
     x = pluck(pca_plot_axes_labels, 1),
     y = pluck(pca_plot_axes_labels, 2),
-    shape = "Pantient HC",
-    color = "Survival Catagorie",
+    color = "Survival Catagory",
     caption = "Data from doi.org/10.1038/s42003-021-01842-7")+
   theme(plot.caption.position = "plot")
 
 
 plot_pca_one_feature_3 <- pca_fit |>
-  augment(data) |> 
+  augment(meta_and_expression) |> 
   filter(!is.na(smoking_status)) |>
   ggplot(
     aes(
@@ -212,16 +204,15 @@ plot_pca_one_feature_3 <- pca_fit |>
   geom_vline(xintercept = 0) +
   geom_hline(yintercept = 0) +
   labs(
-    title = "PCA: Paitiens clusters by Trancriptpics",
+    title = "PCA: Paitiens clusters by Trancripts",
     x = pluck(pca_plot_axes_labels, 1),
     y = pluck(pca_plot_axes_labels, 2),
-    shape = "Pantient HC",
-    color = "Survival Catagorie",
+    color = "Survival Catagory",
     caption = "Data from doi.org/10.1038/s42003-021-01842-7")+
   theme(plot.caption.position = "plot")
 
 plot_pca_one_feature_4 <- pca_fit |>
-  augment(data) |> 
+  augment(meta_and_expression) |> 
   filter(!is.na(smoking_history_pack_years)) |>
   ggplot(
     aes(
@@ -236,127 +227,22 @@ plot_pca_one_feature_4 <- pca_fit |>
   geom_vline(xintercept = 0) +
   geom_hline(yintercept = 0) +
   labs(
-    title = "PCA: Paitiens clusters by Trancriptpics",
+    title = "PCA: Paitiens clusters by Trancripts",
     x = pluck(pca_plot_axes_labels, 1),
     y = pluck(pca_plot_axes_labels, 2),
-    shape = "Pantient HC",
-    color = "Survival Catagorie",
+    color = "Survival Catagory",
     caption = "Data from doi.org/10.1038/s42003-021-01842-7")+
   theme(plot.caption.position = "plot")
 
-plot_pca_one_feature_1 + plot_pca_one_feature_2 +  
-  plot_pca_one_feature_3 + plot_pca_one_feature_4 + plot_layout(ncol = 2) 
-
-combined<- plot_grid(plot_pca_one_feature_1,
-                     plot_pca_one_feature_2 + 
-                       theme(
-                         axis.text.y = element_blank(),
-                              axis.ticks.y = element_blank(),
-                              axis.title.y = element_blank() 
-                         ),
-                     plot_pca_one_feature_3 +
-                       theme(axis.text.y = element_blank(),
-                              axis.ticks.y = element_blank(),
-                              axis.title.y = element_blank() 
-                             ),
-                     plot_pca_one_feature_4 + 
-                       theme(axis.text.y = element_blank(),
-                              axis.ticks.y = element_blank(),
-                              axis.title.y = element_blank() 
-                             ), 
-                     ncol = 2, 
-                     align = "hv", 
-                     labels = "AUTO")
-combined
-
+combined <- plot_pca_one_feature_1 + plot_pca_one_feature_2 +  
+  plot_pca_one_feature_3 + plot_pca_one_feature_4 + plot_layout(ncol = 2)
 
 ggsave(
-  filename = here("results/05_PCA_one_feature.png"),
-  plot = plot_pca_one_feature
+  filename = here("results/05_PCA_4_feature.png"),
+  plot = combined
 )
-```
-
-```{r}
-plot_pca_one_feature_1 <- pca_fit |>
-  augment(data) |> 
-  filter(!is.na(survival_time)) |>
-  ggplot(
-    aes(
-      x = .fittedPC1,
-      y = .fittedPC2, )) + 
-  geom_point(
-    aes_string(
-      color =   "survival_time"),
-    size = 3) +
-  theme_half_open(12) +
-  background_grid()+
-  geom_vline(xintercept = 0) +
-  geom_hline(yintercept = 0) 
-
-plot_pca_one_feature_2 <- pca_fit |>
-  augment(data) |> 
-  filter(!is.na(sex)) |>
-  ggplot(
-    aes(
-      x = .fittedPC1,
-      y = .fittedPC2, )) + 
-  geom_point(
-    aes_string(
-      color =   "sex"),
-    size = 3) +
-  theme_half_open(12) +
-  background_grid()+
-  geom_vline(xintercept = 0) +
-  geom_hline(yintercept = 0) 
-
-plot_pca_one_feature_3 <- pca_fit |>
-  augment(data) |> 
-  filter(!is.na(smoking_status)) |>
-  ggplot(
-    aes_string(
-      x = ".fittedPC1",
-      y = ".fittedPC2",
-      color =   "smoking_status")) + 
-  geom_point(
-    size = 3
-    ) +
-  theme_half_open(12) +
-  background_grid()+
-  geom_vline(xintercept = 0) +
-  geom_hline(yintercept = 0) 
- 
-plot_pca_one_feature_4 <- pca_fit |>
-  augment(data) |> 
-  filter(!is.na(smoking_history_pack_years)) |>
-  ggplot(
-    aes(
-      x = .fittedPC1,
-      y = .fittedPC2, )) + 
-  geom_point(
-    aes_string(
-      color =   "smoking_history_pack_years"),
-    size = 3) +
-  theme_half_open(12) +
-  background_grid()+
-  geom_vline(xintercept = 0) +
-  geom_hline(yintercept = 0) 
- 
-combined<- plot_grid(plot_pca_one_feature_1,
-                     plot_pca_one_feature_2,
-                     plot_pca_one_feature_3,
-                     plot_pca_one_feature_4, 
-                     ncol = 2, 
-                     align = "hv", 
-                     labels = "AUTO")
- 
 
 combined
-
-
-ggsave(
-  filename = here("results/05_PCA_one_feature.png"),
-  plot = plot_pca_one_feature
-)
 ```
 
 ### Eigenvalue
@@ -398,7 +284,7 @@ eigen_explained <- pca_fit |>
 eigen_explained
 ```
 
-### Feature in PCA space
+### Plotting transcripts with eigenvectors in PCA space
 
 ```{r}
 arrow_style <- arrow(
@@ -407,35 +293,35 @@ arrow_style <- arrow(
 
 
 # plot rotation matrix
-pca_fit |>
+transcripts_in_pca <- pca_fit |>
   tidy(matrix = "rotation") |>
   pivot_wider(names_from = "PC", names_prefix = "PC", values_from = "value") |>
-  slice(1:5) |>
+  slice(1:10) |>
   mutate(
     column = str_remove_all(column, "_NM_.*")) |>
   ggplot(aes(PC1, PC2)) +
   geom_segment(xend = 0, yend = 0, arrow = arrow_style) +
   geom_text_repel(
     aes(label = column),
-    hjust = 1, nudge_x = -0.02, 
     color = "#904C2F"
   ) +
   xlim(-0.1, .1) + ylim(-.1, .1) +
-  coord_fixed() + # fix aspect ratio to 1:1
+  
   theme_minimal_grid(12)
 
 ggsave(
   filename = here("results/05_PCA_feature.png"),
-  plot = plot_PCA_features
+  plot = transcripts_in_pca
 )
+
+transcripts_in_pca
 ```
 
-### Plots of clusters in PCA
+### Plots of hierarchical clusters in PCA
 
 ```{r}
-
 plot_pca_clusters <- pca_fit |>
-  augment(data) |>
+  augment(meta_and_expression) |>
   ggplot(
     aes(
       x = .fittedPC1,
@@ -453,8 +339,8 @@ plot_pca_clusters <- pca_fit |>
     yintercept = 0
     ) +
   labs(
-    title = "PCA of Trancriptpics expresion",
-    subtitle = "Cluster of patiens based on selected trancripts",
+    title = "PCA of Trancripts expression",
+    subtitle = "Cluster of patients based on selected trancripts",
     x = pluck(pca_plot_axes_labels, 1),
     y = pluck(pca_plot_axes_labels, 2),
     shape = "Pantient HC",
@@ -467,12 +353,14 @@ plot_pca_clusters <- pca_fit |>
   scale_colour_discrete(
     labels = c("Cluster 1", "Cluster 2", "Cluster 3","Cluster 4")
   ) 
-plot_pca_clusters
+
 
 ggsave(
   filename = here("results/05_PCA_cluster.png"),
   plot = plot_pca_clusters
 )
+
+plot_pca_clusters
 ```
 
 ### Explore the clusters
@@ -480,15 +368,19 @@ ggsave(
 #### Cluster with point plot
 
 ```{r}
-trancrips <- pca_fit |>
+# Select 4 transcripts based on min and max values in 
+four_transcripts <- pca_fit |>
   tidy(matrix = "rotation") |>
   pivot_wider(names_from = "PC", names_prefix = "PC", values_from = "value") |>
-  arrange(desc(PC2))|>
-  select(column)|>
-  slice(1:5)|>
-  pull()
+  filter(PC1 == min(PC1) | 
+         PC1 == max(PC1) | 
+         PC2 == min(PC2) | 
+         PC2 == max(PC2)  )
 
-mean_data_pca2 <- data |>
+four_transcripts
+
+
+mean_data_pca2 <- meta_and_expression |>
   group_by(sample_cluster)|>
   summarise(mean_GNG8_NM_033258 = mean(GNG8_NM_033258),
             mean_NHLH1_NM_005598 = mean(NHLH1_NM_005598),
@@ -534,7 +426,9 @@ trancrip_to_plot <- pca_fit |>
   slice(1:5)|>
   pull()
 
-mean_data_pca1 <- data |>
+trancrip_to_plot <- four_transcripts
+
+mean_data_pca1 <- meta_and_expression |>
   group_by(sample_cluster)|>
   select(trancrip_to_plot)|>
     pivot_longer(
@@ -557,117 +451,23 @@ plot_boxplot_pc1_cluster <- mean_data_pca1 |>
         labels = c("Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4")
         ) +
   labs(
-    title = "Trancript express acroos Clusters",
-    x = "Pantien cluters by HC",
+    title = "Transcript expression across Clusters",
+    x = "Patient cluters by HC",
     y = "Trancript Expression log10",
-    fill = "Trancrips",
+    fill = "Transcripts",
     caption = "Data from doi.org/10.1038/s42003-021-01842-7"
     ) +
   theme(
     plot.caption.position = "plot",
     ) +
-  ylim(-6,4)
-
-
-plot_boxplot_pc1_cluster
+  ylim(-2,4)
 
 ggsave(
   filename = here("results/05_PCA_DET_boxplot_pc1_cluster.png"),
   plot = plot_boxplot_pc1_cluster
 )
-```
 
-#### DET cluster PC2
-
-```{r}
-trancrip_to_plot2 <- pca_fit |>
-  tidy(matrix = "rotation") |>
-  pivot_wider(names_from = "PC", names_prefix = "PC", values_from = "value") |>
-  arrange(desc(PC2))|>
-  select(column)|>
-  slice(1:5)|>
-  pull()
-
-mean_data_pca2 <- data |>
-  group_by(sample_cluster)|>
-  select(trancrip_to_plot2)|>
-    pivot_longer(
-    cols = -sample_cluster,
-    names_to = "trancrips",
-    values_to = "expression"
-  )
-
-plot_boxplot_pc2_cluster <- mean_data_pca2 |>
-  ggplot(  
-       aes(
-         sample_cluster,
-         log2(expression),
-         fill = trancrips,
-         dodge = trancrips)) +
-  stat_boxplot(
-    geom ='errorbar') +
-  geom_boxplot(
-    outlier.shape = NA
-    )  +
-  scale_y_continuous(
-    limits = c(-10,5) ) +
-  scale_x_discrete(
-        labels = c("Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4")
-        ) +
-    labs(
-    title = "Trancript express acroos Clusters",
-    x = "Pantien cluters by HC",
-    y = "Trancript Expression",
-    fill = "Trancrips",
-    caption = "Data from doi.org/10.1038/s42003-021-01842-7"
-    ) +
-  theme(
-    plot.caption.position = "plot",
-    )
-
-plot_boxplot_pc2_cluster
-
-ggsave(
-  filename = here("results/05_PCA_DET_boxplot_pc1_cluster.png"),
-  plot = plot_boxplot_pc2_cluster
-)
-```
-
-#### DET single box PC1
-
-```{r}
-
-trancrip_to_plot <- pca_fit |>
-  tidy(matrix = "rotation") |>
-  pivot_wider(names_from = "PC", names_prefix = "PC", values_from = "value") |>
-  arrange(desc(PC2))|>
-  select(column)|>
-  slice(1)|>
-  pull()
-
-mean_data <- data |>
-  group_by(sample_cluster)|>
-  summarise(mean(trancrip_to_plot))
-  
-
-ggplot(data,aes_string(
-    x = "sample_cluster",
-    y = trancrip_to_plot,
-    fill = "sample_cluster")
-    ) +
-
-  geom_boxplot()
-```
-
-#### DET single box PCA2
-
-```{r}
-ggplot(data, aes(
-    x = sample_cluster,
-    y = POU2F3_NM_014352,
-    fill = sample_cluster)
-    ) +
-  geom_boxplot()
+plot_boxplot_pc1_cluster
 ```
 
 ## compare in genes
@@ -675,13 +475,12 @@ ggplot(data, aes(
 ### load gene data
 
 ```{r}
-data_all <- read_tsv(here("data/03_dat_all_augment.tsv"))
+data_all <- read_tsv(here("data/02_dat_clean.tsv"))
 ```
 
 ```{r}
-
 expression_data <- data_all |>
-  select(sample_id, 33:ncol(data_all))
+  select(sample_id, 30:ncol(data_all))
 
 # Convert expression data into long format
 expr_long <- expression_data |>
